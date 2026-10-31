@@ -1,0 +1,55 @@
+[package]
+name = "rusty-chain-kit"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+description = "All-in-one command center (CLI + GUI) and unified developer toolkit for the Paradigm and Ethereum Rust ecosystem"
+license = "MIT OR Apache-2.0"
+default-run = "rusty-chain-kit"
+
+[lib]
+name = "rusty_chain_kit"
+path = "src/lib.rs"
+
+[[bin]]
+name = "rusty-chain-kit"
+path = "src/main.rs"
+
+[[bin]]
+name = "para"
+path = "src/bin/para.rs"
+
+[dependencies]
+alloy = { version = "2.5.0", features = [
+    "provider-ws",
+    "pubsub",
+    "network",
+    "rpc-types",
+] }
+mesc = { version = "0.3.0" }
+
+anyhow = "1"
+axum = "0.8"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+clap = { version = "4", features = ["derive", "env", "wrap_help"] }
+comfy-table = "7"
+futures = "0.3"
+mime_guess = "2"
+open = "5"
+pathdiff = "0.2"
+rand = "0.9"
+rust-embed = "8"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+toml = "0.8"
+which = "7"
+
+[dev-dependencies]
+tempfile = "3"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+strip = "debuginfo"
+codegen-units = 16

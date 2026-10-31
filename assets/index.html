@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rusty Chain Kit — Ethereum & Paradigm Rust Control Center</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#f0fdf4', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
+            dark: { 800: '#1e293b', 900: '#0f172a', 950: '#020617' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-dark-950 text-slate-100 min-h-screen flex flex-col">
+  <!-- Top Navigation Bar -->
+  <header class="bg-dark-900 border-b border-slate-800 px-6 py-3.5 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="w-10 h-10 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shadow-inner">
+        <img src="/icon.png" class="w-9 h-9 object-contain" alt="Rusty Chain Kit Logo">
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold tracking-wide text-white text-lg">Rusty Chain Kit</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">v0.1.0</span>
+          <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">para</span>
+        </div>
+        <p class="text-xs text-slate-400">Foundry · Reth · Alloy · Solar · Cryo · Viem · Artemis · Mesc · Heimdall · Revm · Aderyn</p>
+      </div>
+    </div>
+
+    <!-- Live RPC / Devnet Quick Indicator -->
+    <div class="flex items-center space-x-4">
+      <div id="quick-devnet-badge" class="flex items-center space-x-2 px-3 py-1.5 rounded-md bg-slate-800/80 border border-slate-700 text-xs">
+        <span class="relative flex h-2 w-2">
+          <span id="devnet-ping-indicator" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+          <span id="devnet-status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-slate-400"></span>
+        </span>
+        <span id="devnet-status-text" class="text-slate-300 font-medium">Devnet: Checking...</span>
+      </div>
+
+      <div class="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 rounded-md px-3 py-1.5">
+        <i class="fa-solid fa-network-wired text-slate-400 text-xs"></i>
+        <select id="header-rpc-select" onchange="switchRpc(this.value)" class="bg-transparent text-xs text-slate-200 focus:outline-none cursor-pointer">
+          <option value="default">Default RPC</option>
+          <option value="http://127.0.0.1:8545">Local Anvil (8545)</option>
+          <option value="https://ethereum-rpc.publicnode.com">Mainnet (PublicNode)</option>
+          <option value="https://base-rpc.publicnode.com">Base (PublicNode)</option>
+          <option value="https://arbitrum-one-rpc.publicnode.com">Arbitrum One</option>
+          <option value="https://ethereum-sepolia-rpc.publicnode.com">Sepolia Testnet</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Layout -->
+  <div class="flex-1 flex overflow-hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="w-60 bg-dark-900 border-r border-slate-800 flex flex-col justify-between py-4 select-none">
+      <nav class="space-y-1 px-3">
+        <button onclick="navigateTab('repos')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-emerald-400 bg-slate-800/80" data-tab="repos">
+          <i class="fa-solid fa-code-branch w-5 text-center"></i>
+          <span>Repository Hub</span>
+        </button>
+        <button onclick="navigateTab('devnet')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="devnet">
+          <i class="fa-solid fa-server w-5 text-center"></i>
+          <span>Devnet & Nodes</span>
+        </button>
+        <button onclick="navigateTab('chain')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="chain">
+          <i class="fa-solid fa-cubes w-5 text-center"></i>
+          <span>Chain Explorer</span>
+        </button>
+        <button onclick="navigateTab('tools')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tools">
+          <i class="fa-solid fa-toolbox w-5 text-center"></i>
+          <span>Toolbox & Binaries</span>
+        </button>
+        <button onclick="navigateTab('workbench')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="workbench">
+          <i class="fa-solid fa-wand-magic-sparkles w-5 text-center"></i>
+          <span>Workbenches</span>
+        </button>
+      </nav>
+
+      <!-- Footer Info -->
+      <div class="px-4 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-1">
+        <div class="flex items-center justify-between">
+          <span>Binary:</span>
+          <span class="mono text-emerald-400">para v0.1.0</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Rustc:</span>
+          <span class="mono text-slate-400">1.99.1</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span>Arch:</span>
+          <span class="mono text-slate-400">macOS aarch64</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 overflow-y-auto p-8 bg-dark-950">
+      
+      <!-- ─────────────────── TAB: REPOSITORIES ─────────────────── -->
+      <section id="tab-repos" class="tab-pane space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-code-branch text-emerald-400"></i>
+              Repository Hub
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">
+              Tracks canonical upstream origins, synchronization status, local branches, and build freshness.
+            </p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button onclick="updateAllSuite()" class="px-4 py-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-sm font-semibold transition flex items-center space-x-2 shadow-md">
+              <i class="fa-solid fa-cloud-arrow-down"></i>
+              <span>Update & Streamline Suite</span>
+            </button>
+            <button onclick="syncAllRepos()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm font-medium transition border border-slate-700 flex items-center space-x-2">
+              <i class="fa-solid fa-arrows-rotate"></i>
+              <span>Sync All</span>
+            </button>
+            <button onclick="fetchRepos()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition border border-slate-700">
+              <i class="fa-solid fa-arrow-rotate-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Repos Table -->
+        <div class="bg-dark-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-300">
+              <thead class="bg-slate-800/60 text-slate-400 text-xs uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                  <th class="px-5 py-3.5">Repository</th>
+                  <th class="px-5 py-3.5">Category</th>
+                  <th class="px-5 py-3.5">Upstream Origin</th>
+                  <th class="px-5 py-3.5">Tracking / Branch</th>
+                  <th class="px-5 py-3.5">Sync Status</th>
+                  <th class="px-5 py-3.5">HEAD Commit</th>
+                  <th class="px-5 py-3.5 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="repos-table-body" class="divide-y divide-slate-800/60 font-normal">
+                <tr>
+                  <td colspan="7" class="px-5 py-8 text-center text-slate-500">
+                    <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading repository status...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: DEVNET & NODES ─────────────────── -->
+      <section id="tab-devnet" class="tab-pane hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-server text-emerald-400"></i>
+              Devnet & Node Manager
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">
+              Start, stop, and fork local chains using Anvil (Foundry) or Reth Execution Node.
+            </p>
+          </div>
+        </div>
+
+        <!-- Devnet Cards Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Anvil Card -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-6 space-y-5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 text-lg">
+                  <i class="fa-solid fa-hammer"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-white">Anvil Devnet</h3>
+                  <p class="text-xs text-slate-400">Foundry local fast Ethereum development node</p>
+                </div>
+              </div>
+              <span id="anvil-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">Stopped</span>
+            </div>
+
+            <!-- Anvil Controls -->
+            <div class="space-y-3 pt-2">
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block text-slate-400 mb-1">Port</label>
+                  <input id="anvil-port-input" type="number" value="8545" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 mono">
+                </div>
+                <div>
+                  <label class="block text-slate-400 mb-1">Block Time (sec, 0=mine on tx)</label>
+                  <input id="anvil-blocktime-input" type="number" value="0" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 mono">
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Fork Chain (Optional URL or alias like mainnet, base)</label>
+                <input id="anvil-fork-input" type="text" placeholder="e.g. mainnet or https://eth.llamarpc.com" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono">
+              </div>
+
+              <div class="flex items-center space-x-3 pt-2">
+                <button id="btn-start-anvil" onclick="startDevnet('devnet')" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition flex items-center justify-center space-x-2">
+                  <i class="fa-solid fa-play text-xs"></i>
+                  <span>Start Anvil</span>
+                </button>
+                <button id="btn-stop-anvil" onclick="stopDevnet('devnet')" class="py-2 px-4 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-sm font-medium transition flex items-center justify-center space-x-2">
+                  <i class="fa-solid fa-stop text-xs"></i>
+                  <span>Stop</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reth Card -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-6 space-y-5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 text-lg">
+                  <i class="fa-solid fa-atom"></i>
+                </div>
+                <div>
+                  <h3 class="text-lg font-bold text-white">Reth Dev Node</h3>
+                  <p class="text-xs text-slate-400">Modular Rust full node running in `--dev` mode</p>
+                </div>
+              </div>
+              <span id="reth-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700">Stopped</span>
+            </div>
+
+            <!-- Reth Controls -->
+            <div class="space-y-3 pt-2">
+              <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label class="block text-slate-400 mb-1">HTTP Port</label>
+                  <input id="reth-port-input" type="number" value="8645" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 mono">
+                </div>
+                <div>
+                  <label class="block text-slate-400 mb-1">Dev Block Time (sec)</label>
+                  <input id="reth-blocktime-input" type="number" value="1" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-slate-200 mono">
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-3 pt-2">
+                <button id="btn-start-reth" onclick="startDevnet('node')" class="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition flex items-center justify-center space-x-2">
+                  <i class="fa-solid fa-play text-xs"></i>
+                  <span>Start Reth Node</span>
+                </button>
+                <button id="btn-stop-reth" onclick="stopDevnet('node')" class="py-2 px-4 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-sm font-medium transition flex items-center justify-center space-x-2">
+                  <i class="fa-solid fa-stop text-xs"></i>
+                  <span>Stop</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Devnet Accounts & Keys -->
+        <div id="devnet-accounts-container" class="bg-dark-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-wallet text-emerald-400"></i>
+              Pre-funded Test Accounts (10,000 ETH each)
+            </h3>
+            <span class="text-xs text-slate-500">Available when Anvil is running</span>
+          </div>
+
+          <div id="devnet-accounts-list" class="space-y-2">
+            <p class="text-xs text-slate-500 italic">Start Anvil devnet to view pre-funded accounts and keys.</p>
+          </div>
+        </div>
+
+        <!-- Live Node Console Logs -->
+        <div class="bg-dark-900 border border-slate-800 rounded-xl p-6 space-y-3">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-slate-400"></i>
+              Live Node Output Console
+            </h3>
+            <div class="flex items-center space-x-2">
+              <select id="log-target-select" onchange="fetchDevnetLogs()" class="bg-slate-800 border border-slate-700 text-xs rounded px-2 py-1 text-slate-300">
+                <option value="devnet">Anvil Devnet</option>
+                <option value="node">Reth Node</option>
+              </select>
+              <button onclick="fetchDevnetLogs()" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs rounded text-slate-300 border border-slate-700">
+                <i class="fa-solid fa-rotate-right"></i>
+              </button>
+            </div>
+          </div>
+          <pre id="devnet-logs-box" class="mono text-xs bg-slate-950 p-4 rounded-lg border border-slate-800/80 text-emerald-400/90 h-64 overflow-y-auto leading-relaxed">No logs available.</pre>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: CHAIN EXPLORER ─────────────────── -->
+      <section id="tab-chain" class="tab-pane hidden space-y-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-cubes text-emerald-400"></i>
+              Chain Explorer
+            </h1>
+            <p class="text-slate-400 text-sm mt-1">
+              Direct Alloy provider queries: live block inspection, transaction receipts, addresses & bytecode.
+            </p>
+          </div>
+          <button onclick="refreshChainInfo()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-sm transition border border-slate-700 flex items-center space-x-2">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+
+        <!-- Chain Stats Header Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <span class="text-xs text-slate-400">Network Name</span>
+            <div id="stat-network" class="text-lg font-bold text-white mt-1">--</div>
+            <span id="stat-chainid" class="text-xs mono text-slate-500">Chain ID: --</span>
+          </div>
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <span class="text-xs text-slate-400">Latest Block</span>
+            <div id="stat-block" class="text-lg font-bold text-emerald-400 mt-1 mono">#--</div>
+            <span class="text-xs text-slate-500">Synced to head</span>
+          </div>
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <span class="text-xs text-slate-400">Gas Price / Base Fee</span>
+            <div id="stat-gas" class="text-lg font-bold text-white mt-1 mono">-- Gwei</div>
+            <span id="stat-basefee" class="text-xs text-slate-500 mono">Base: -- Gwei</span>
+          </div>
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <span class="text-xs text-slate-400">Node / Client Version</span>
+            <div id="stat-client" class="text-sm font-semibold text-slate-300 mt-1 truncate">--</div>
+            <span id="stat-latency" class="text-xs mono text-emerald-400">Latency: -- ms</span>
+          </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="bg-dark-900 border border-slate-800 rounded-xl p-4 flex gap-3">
+          <div class="flex-1 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+            <input id="chain-search-input" type="text" placeholder="Search by Block Number (#), Transaction Hash (0x...), or Address (0x...)" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-200 mono focus:outline-none focus:border-emerald-500">
+          </div>
+          <button onclick="handleChainSearch()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition flex items-center space-x-2">
+            <span>Inspect</span>
+          </button>
+        </div>
+
+        <!-- Inspector Output Card -->
+        <div id="chain-inspect-card" class="bg-dark-900 border border-slate-800 rounded-xl p-6 hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <h3 id="inspect-title" class="text-base font-bold text-white">Inspection Result</h3>
+            <button onclick="document.getElementById('chain-inspect-card').classList.add('hidden')" class="text-slate-400 hover:text-white">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div id="inspect-content" class="space-y-3 text-sm">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+
+        <!-- Latest Block Transactions -->
+        <div class="bg-dark-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-slate-400"></i>
+            Latest Block Summary
+          </h3>
+          <div id="latest-block-summary" class="text-xs space-y-2 text-slate-300">
+            <p class="text-slate-500">Fetching latest block details...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: TOOLBOX ─────────────────── -->
+      <section id="tab-tools" class="tab-pane hidden space-y-6">
+        <div>
+          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-toolbox text-emerald-400"></i>
+            Toolbox & Binaries
+          </h1>
+          <p class="text-slate-400 text-sm mt-1">
+            Status of all compiled binaries available in <span class="mono text-emerald-400">.para/bin</span> and system PATH.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="tools-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: WORKBENCH ─────────────────── -->
+      <section id="tab-workbench" class="tab-pane hidden space-y-6">
+        <div>
+          <h1 class="text-2xl font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-emerald-400"></i>
+            Workbenches & Multi-Tool Workflows
+          </h1>
+          <p class="text-slate-400 text-sm mt-1">
+            Integrated pipelines: Solar fast-compilation, Heimdall bytecode decompiler, Cryo data extractor, and project generators.
+          </p>
+        </div>
+
+        <!-- Sub Tabs inside Workbench -->
+        <div class="flex space-x-2 border-b border-slate-800 pb-2">
+          <button onclick="switchWorkbenchSubtab('compiler')" class="wb-tab-btn px-4 py-2 text-sm font-medium rounded-lg bg-slate-800 text-emerald-400" data-wbtab="compiler">Solidity Compiler (Solar)</button>
+          <button onclick="switchWorkbenchSubtab('decompiler')" class="wb-tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white" data-wbtab="decompiler">Decompiler (Heimdall)</button>
+          <button onclick="switchWorkbenchSubtab('scaffold')" class="wb-tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white" data-wbtab="scaffold">Project Scaffolder</button>
+        </div>
+
+        <!-- Subtab: Compiler -->
+        <div id="wbtab-compiler" class="space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-400">Paste Solidity source code below:</span>
+            <div class="flex items-center space-x-2">
+              <select id="compiler-choice" class="bg-slate-800 border border-slate-700 text-xs rounded px-2.5 py-1 text-slate-200">
+                <option value="solar">Solar (Rust Compiler)</option>
+                <option value="forge">Forge (Foundry)</option>
+              </select>
+              <button onclick="runCompiler()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold flex items-center space-x-2">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Compile Now</span>
+              </button>
+            </div>
+          </div>
+          <textarea id="solidity-code-input" rows="12" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-4 mono text-xs text-emerald-300 focus:outline-none focus:border-emerald-500 leading-relaxed">// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.28;
+
+contract Counter {
+    uint256 public count;
+
+    event Incremented(uint256 newCount);
+
+    function increment() external {
+        count += 1;
+        emit Incremented(count);
+    }
+}
+</textarea>
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase">Compiler Output</h4>
+            <pre id="compiler-output" class="mono text-xs bg-slate-950 p-3 rounded text-slate-300 h-40 overflow-y-auto">Click "Compile Now" to run.</pre>
+          </div>
+        </div>
+
+        <!-- Subtab: Decompiler -->
+        <div id="wbtab-decompiler" class="hidden space-y-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Target: Contract Address or Raw Bytecode</label>
+            <div class="flex gap-2">
+              <input id="decompile-target" type="text" placeholder="0x... address or hex bytecode" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-xs mono text-slate-200">
+              <button onclick="runDecompiler()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2">
+                <i class="fa-solid fa-code"></i>
+                <span>Decompile</span>
+              </button>
+            </div>
+          </div>
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+            <h4 class="text-xs font-bold text-slate-400 mb-2 uppercase">Recovered Solidity / Disassembly</h4>
+            <pre id="decompile-output" class="mono text-xs bg-slate-950 p-4 rounded text-emerald-400 h-64 overflow-y-auto">Enter target and click Decompile.</pre>
+          </div>
+        </div>
+
+        <!-- Subtab: Scaffold -->
+        <div id="wbtab-scaffold" class="hidden space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-robot"></i>
+              </div>
+              <h4 class="font-bold text-white text-base">Artemis MEV Bot</h4>
+              <p class="text-xs text-slate-400">Collectors ➔ Strategies ➔ Executors bot architecture ported from ethers-rs to Alloy.</p>
+              <input id="scaffold-bot-name" type="text" placeholder="bot-name" value="my-arb-bot" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono">
+              <button onclick="runScaffold('bot', document.getElementById('scaffold-bot-name').value)" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold">
+                Generate Bot Project
+              </button>
+            </div>
+
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center text-lg">
+                <i class="fa-brands fa-js"></i>
+              </div>
+              <h4 class="font-bold text-white text-base">Viem TypeScript Script</h4>
+              <p class="text-xs text-slate-400">Modern TypeScript EVM script with Viem client, block watching, and ESM setup.</p>
+              <input id="scaffold-script-name" type="text" placeholder="script-name" value="chain-monitor" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono">
+              <button onclick="runScaffold('script', document.getElementById('scaffold-script-name').value)" class="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold">
+                Generate Script Project
+              </button>
+            </div>
+
+            <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+              <div class="w-10 h-10 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-file-contract"></i>
+              </div>
+              <h4 class="font-bold text-white text-base">Foundry + Solar Contract</h4>
+              <p class="text-xs text-slate-400">Complete Solidity project with Foundry testing suite and Solar fast-compilation setup.</p>
+              <input id="scaffold-contract-name" type="text" placeholder="contract-name" value="Vault" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono">
+              <button onclick="runScaffold('contract', document.getElementById('scaffold-contract-name').value)" class="w-full py-2 bg-orange-600 hover:bg-orange-500 text-white rounded text-xs font-semibold">
+                Generate Contract Project
+              </button>
+            </div>
+          </div>
+          <div id="scaffold-status" class="text-xs text-emerald-400 mono"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // State management
+    let currentRpc = 'default';
+
+    function switchRpc(rpc) {
+      currentRpc = rpc;
+      refreshChainInfo();
+    }
+
+    function navigateTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-btn').forEach(el => {
+        el.classList.remove('text-emerald-400', 'bg-slate-800/80');
+        el.classList.add('text-slate-400');
+      });
+
+      const pane = document.getElementById(`tab-${tabId}`);
+      if (pane) pane.classList.remove('hidden');
+
+      const btn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+      if (btn) {
+        btn.classList.add('text-emerald-400', 'bg-slate-800/80');
+        btn.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'repos') fetchRepos();
+      if (tabId === 'devnet') checkDevnetStatus();
+      if (tabId === 'chain') refreshChainInfo();
+      if (tabId === 'tools') fetchTools();
+    }
+
+    // ─────────────────────────── Repos API ───────────────────────────
+    async function fetchRepos() {
+      try {
+        const res = await fetch('/api/repos');
+        const data = await res.json();
+        const tbody = document.getElementById('repos-table-body');
+        if (!data.repos) return;
+
+        tbody.innerHTML = data.repos.map(r => {
+          let statusBadge = '<span class="px-2 py-0.5 rounded text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Up to date</span>';
+          if (r.behind > 0) {
+            statusBadge = `<span class="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20">${r.behind} behind</span>`;
+          }
+          if (r.ahead > 0) {
+            statusBadge += ` <span class="px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-400 border border-blue-500/20">${r.ahead} ahead</span>`;
+          }
+          if (r.dirty > 0) {
+            statusBadge += ` <span class="px-2 py-0.5 rounded text-xs bg-purple-500/10 text-purple-400 border border-purple-500/20">${r.dirty} dirty</span>`;
+          }
+
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="px-5 py-4 font-semibold text-white">
+                <div class="flex items-center space-x-2">
+                  <span>${r.name}</span>
+                </div>
+                <div class="text-xs text-slate-500 mt-0.5">${r.description || ''}</div>
+              </td>
+              <td class="px-5 py-4">
+                <span class="px-2 py-0.5 rounded text-xs bg-slate-800 text-slate-300 font-mono">${r.category}</span>
+              </td>
+              <td class="px-5 py-4 text-xs mono text-slate-400">
+                <a href="${r.upstream}" target="_blank" class="hover:text-emerald-400 transition truncate block max-w-xs">${r.upstream}</a>
+              </td>
+              <td class="px-5 py-4 text-xs mono">
+                <span class="text-slate-300">${r.current_branch || r.local_branch}</span>
+                <span class="text-slate-500">➔ ${r.upstream_ref}</span>
+              </td>
+              <td class="px-5 py-4">
+                ${statusBadge}
+              </td>
+              <td class="px-5 py-4 text-xs mono text-slate-400">
+                <div>${r.head}</div>
+                <div class="text-[11px] text-slate-500 truncate max-w-[180px]">${r.head_subject}</div>
+              </td>
+              <td class="px-5 py-4 text-right space-x-2">
+                <button onclick="syncRepo('${r.name}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-xs font-medium rounded text-slate-200 border border-slate-700 transition">
+                  <i class="fa-solid fa-arrows-rotate mr-1"></i> Sync
+                </button>
+                <button onclick="buildRepo('${r.name}')" class="px-2.5 py-1 bg-emerald-700/60 hover:bg-emerald-600 text-xs font-medium rounded text-white transition">
+                  <i class="fa-solid fa-hammer mr-1"></i> Build
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function syncRepo(name) {
+      alert(`Syncing ${name}...`);
+      const res = await fetch('/api/repos/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo: name })
+      });
+      fetchRepos();
+    }
+
+    async function updateAllSuite() {
+      if (!confirm('This will fetch upstreams for all 11 repos, reconcile dependencies, and rebuild the toolchain. Proceed?')) return;
+      
+      const modal = document.getElementById('update-modal');
+      const log = document.getElementById('update-modal-log');
+      modal.classList.remove('hidden');
+      log.textContent = 'Starting streamlined update & toolchain build across all repositories...\n';
+
+      try {
+        const res = await fetch('/api/repos/update-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ check: false, rebuild: false })
+        });
+        const data = await res.json();
+        if (data.output) {
+          log.textContent = data.output;
+        } else if (data.error) {
+          log.textContent += '\nError: ' + data.error;
+        }
+        fetchRepos();
+        fetchTools();
+      } catch (err) {
+        log.textContent += '\nNetwork error: ' + err.message;
+      }
+    }
+
+    async function syncAllRepos() {
+      alert('Syncing all repositories with upstream origins...');
+      await fetch('/api/repos/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      fetchRepos();
+    }
+
+    async function buildRepo(name) {
+      alert(`Triggered build for ${name}...`);
+      await fetch('/api/repos/build', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo: name })
+      });
+      fetchRepos();
+    }
+
+    // ─────────────────────────── Devnet API ───────────────────────────
+    async function checkDevnetStatus() {
+      try {
+        const res = await fetch('/api/devnet/status');
+        const data = await res.json();
+        
+        const devnetRunning = !!data.devnet;
+        const nodeRunning = !!data.node;
+
+        const dot = document.getElementById('devnet-status-dot');
+        const ping = document.getElementById('devnet-ping-indicator');
+        const text = document.getElementById('devnet-status-text');
+
+        if (devnetRunning) {
+          dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-emerald-400';
+          ping.className = 'animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75';
+          text.textContent = `Anvil Online (:8545)`;
+          document.getElementById('anvil-badge').className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          document.getElementById('anvil-badge').textContent = `Running (PID ${data.devnet.pid})`;
+        } else {
+          dot.className = 'relative inline-flex rounded-full h-2 w-2 bg-slate-400';
+          ping.className = 'hidden';
+          text.textContent = 'Devnet: Stopped';
+          document.getElementById('anvil-badge').className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+          document.getElementById('anvil-badge').textContent = 'Stopped';
+        }
+
+        if (nodeRunning) {
+          document.getElementById('reth-badge').className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30';
+          document.getElementById('reth-badge').textContent = `Running (PID ${data.node.pid})`;
+        } else {
+          document.getElementById('reth-badge').className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+          document.getElementById('reth-badge').textContent = 'Stopped';
+        }
+
+        if (devnetRunning) {
+          fetchDevnetAccounts();
+        }
+        fetchDevnetLogs();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function startDevnet(kind) {
+      let body = { kind };
+      if (kind === 'devnet') {
+        body.port = parseInt(document.getElementById('anvil-port-input').value) || 8545;
+        body.block_time = parseInt(document.getElementById('anvil-blocktime-input').value) || 0;
+        const fork = document.getElementById('anvil-fork-input').value.trim();
+        if (fork) body.fork = fork;
+      } else {
+        body.port = parseInt(document.getElementById('reth-port-input').value) || 8645;
+        body.block_time = parseInt(document.getElementById('reth-blocktime-input').value) || 1;
+      }
+
+      const res = await fetch('/api/devnet/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert('Error: ' + data.error);
+      }
+      setTimeout(checkDevnetStatus, 1000);
+    }
+
+    async function stopDevnet(kind) {
+      await fetch('/api/devnet/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind })
+      });
+      setTimeout(checkDevnetStatus, 500);
+    }
+
+    async function fetchDevnetAccounts() {
+      const res = await fetch('/api/devnet/accounts');
+      const data = await res.json();
+      const list = document.getElementById('devnet-accounts-list');
+      if (data.accounts && data.accounts.length > 0) {
+        list.innerHTML = data.accounts.map(a => `
+          <div class="bg-slate-950 p-3 rounded-lg border border-slate-800/80 flex flex-col md:flex-row md:items-center justify-between text-xs gap-2">
+            <div class="flex items-center space-x-2">
+              <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 mono">#${a.index}</span>
+              <span class="mono text-slate-200 font-semibold">${a.address}</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="mono text-slate-500 truncate max-w-[220px]">Key: ${a.private_key || 'hidden'}</span>
+              <button onclick="navigator.clipboard.writeText('${a.private_key || a.address}')" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function fetchDevnetLogs() {
+      const kind = document.getElementById('log-target-select').value;
+      const res = await fetch(`/api/devnet/logs?kind=${kind}&lines=100`);
+      const data = await res.json();
+      document.getElementById('devnet-logs-box').textContent = data.log || 'No logs yet.';
+    }
+
+    // ─────────────────────────── Chain Explorer API ───────────────────────────
+    async function refreshChainInfo() {
+      try {
+        const url = `/api/rpc/chain?rpc=${encodeURIComponent(currentRpc)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.info) {
+          const inf = data.info;
+          document.getElementById('stat-network').textContent = inf.chain_name || 'EVM Chain';
+          document.getElementById('stat-chainid').textContent = `Chain ID: ${inf.chain_id}`;
+          document.getElementById('stat-block').textContent = `#${inf.block_number.toLocaleString()}`;
+          document.getElementById('stat-gas').textContent = `${inf.gas_price_gwei} Gwei`;
+          document.getElementById('stat-basefee').textContent = `Base: ${inf.base_fee_gwei || '-'} Gwei`;
+          document.getElementById('stat-client').textContent = inf.client_version || 'Ethereum Client';
+          document.getElementById('stat-latency').textContent = `Latency: ${inf.latency_ms} ms`;
+        }
+        fetchLatestBlock();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function fetchLatestBlock() {
+      try {
+        const res = await fetch(`/api/rpc/block?rpc=${encodeURIComponent(currentRpc)}&id=latest`);
+        const data = await res.json();
+        if (data.summary) {
+          const b = data.summary;
+          document.getElementById('latest-block-summary').innerHTML = `
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950 p-4 rounded-lg border border-slate-800/80">
+              <div>
+                <span class="text-slate-500">Hash:</span>
+                <div class="mono text-slate-300 truncate">${b.hash}</div>
+              </div>
+              <div>
+                <span class="text-slate-500">Gas Used:</span>
+                <div class="mono text-slate-300">${b.gas_used.toLocaleString()} (${Math.round((b.gas_used / b.gas_limit) * 100)}%)</div>
+              </div>
+              <div>
+                <span class="text-slate-500">Transactions:</span>
+                <div class="mono text-emerald-400 font-semibold">${b.tx_count} transactions</div>
+              </div>
+              <div>
+                <span class="text-slate-500">Miner / Proposer:</span>
+                <div class="mono text-slate-300 truncate">${b.miner}</div>
+              </div>
+            </div>
+          `;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function handleChainSearch() {
+      const q = document.getElementById('chain-search-input').value.trim();
+      if (!q) return;
+      const card = document.getElementById('chain-inspect-card');
+      const title = document.getElementById('inspect-title');
+      const content = document.getElementById('inspect-content');
+
+      card.classList.remove('hidden');
+      content.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Querying chain...';
+
+      if (q.length === 66 && q.startsWith('0x')) {
+        // Transaction or block hash
+        title.textContent = `Transaction: ${q}`;
+        const res = await fetch(`/api/rpc/tx?rpc=${encodeURIComponent(currentRpc)}&hash=${q}`);
+        const data = await res.json();
+        if (data.summary) {
+          const s = data.summary;
+          content.innerHTML = `
+            <div class="grid grid-cols-2 gap-3 text-xs mono">
+              <div><span class="text-slate-500">Status:</span> <span class="${s.status === 'success' ? 'text-emerald-400' : 'text-rose-400'} font-bold">${s.status.toUpperCase()}</span></div>
+              <div><span class="text-slate-500">Block:</span> #${s.block}</div>
+              <div><span class="text-slate-500">From:</span> ${s.from}</div>
+              <div><span class="text-slate-500">To:</span> ${s.to || 'Contract Creation'}</div>
+              <div><span class="text-slate-500">Value:</span> ${s.value_eth} ETH</div>
+              <div><span class="text-slate-500">Gas Used:</span> ${s.gas_used || '-'}</div>
+              <div><span class="text-slate-500">Effective Gas Price:</span> ${s.effective_gas_price_gwei || '-'} Gwei</div>
+              <div><span class="text-slate-500">Method Selector:</span> ${s.selector || '-'}</div>
+            </div>
+          `;
+        } else {
+          content.textContent = data.error || 'Transaction not found';
+        }
+      } else if (q.length === 42 && q.startsWith('0x')) {
+        // Address
+        title.textContent = `Address: ${q}`;
+        const res = await fetch(`/api/rpc/address?rpc=${encodeURIComponent(currentRpc)}&address=${q}`);
+        const data = await res.json();
+        if (data.info) {
+          const inf = data.info;
+          content.innerHTML = `
+            <div class="grid grid-cols-2 gap-3 text-xs mono">
+              <div><span class="text-slate-500">Balance:</span> ${inf.balance_eth} ETH (${inf.balance_wei} wei)</div>
+              <div><span class="text-slate-500">Nonce:</span> ${inf.nonce}</div>
+              <div><span class="text-slate-500">Type:</span> ${inf.is_contract ? 'Smart Contract' : 'EOA'}</div>
+              <div><span class="text-slate-500">Bytecode Size:</span> ${inf.code_size} bytes</div>
+              ${inf.code_hash ? `<div class="col-span-2"><span class="text-slate-500">Code Hash:</span> ${inf.code_hash}</div>` : ''}
+            </div>
+          `;
+        } else {
+          content.textContent = data.error || 'Address not found';
+        }
+      } else {
+        // Block number
+        title.textContent = `Block #${q}`;
+        const res = await fetch(`/api/rpc/block?rpc=${encodeURIComponent(currentRpc)}&id=${q}`);
+        const data = await res.json();
+        if (data.summary) {
+          const b = data.summary;
+          content.innerHTML = `
+            <div class="grid grid-cols-2 gap-3 text-xs mono">
+              <div><span class="text-slate-500">Hash:</span> ${b.hash}</div>
+              <div><span class="text-slate-500">Timestamp:</span> ${b.time}</div>
+              <div><span class="text-slate-500">Transactions:</span> ${b.tx_count}</div>
+              <div><span class="text-slate-500">Gas Used:</span> ${b.gas_used} / ${b.gas_limit}</div>
+            </div>
+          `;
+        } else {
+          content.textContent = data.error || 'Block not found';
+        }
+      }
+    }
+
+    // ─────────────────────────── Tools API ───────────────────────────
+    async function fetchTools() {
+      const res = await fetch('/api/tools');
+      const data = await res.json();
+      const grid = document.getElementById('tools-grid');
+      if (data.tools) {
+        grid.innerHTML = data.tools.map(t => `
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-base font-bold text-white mono">${t.bin}</span>
+              <span class="px-2 py-0.5 rounded text-xs ${t.source === 'workspace' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : (t.source === 'path' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-slate-800 text-slate-500')}">${t.source}</span>
+            </div>
+            <div class="text-xs text-slate-400 truncate">Repo: <span class="mono text-slate-300">${t.repo}</span></div>
+            <div class="text-xs text-slate-400 truncate">Path: <span class="mono text-slate-500">${t.path || 'Not built'}</span></div>
+            <div class="text-xs mono text-slate-300 pt-1 border-t border-slate-800/80">${t.version || 'Version check unavailable'}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ─────────────────────────── Workbench API ───────────────────────────
+    function switchWorkbenchSubtab(sub) {
+      ['compiler', 'decompiler', 'scaffold'].forEach(id => {
+        document.getElementById(`wbtab-${id}`).classList.add('hidden');
+      });
+      document.getElementById(`wbtab-${sub}`).classList.remove('hidden');
+
+      document.querySelectorAll('.wb-tab-btn').forEach(btn => {
+        btn.classList.remove('bg-slate-800', 'text-emerald-400');
+        btn.classList.add('text-slate-400');
+      });
+      const activeBtn = document.querySelector(`.wb-tab-btn[data-wbtab="${sub}"]`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-slate-800', 'text-emerald-400');
+        activeBtn.classList.remove('text-slate-400');
+      }
+    }
+
+    async function runCompiler() {
+      const code = document.getElementById('solidity-code-input').value;
+      const compiler = document.getElementById('compiler-choice').value;
+      const outBox = document.getElementById('compiler-output');
+      outBox.textContent = `Compiling with ${compiler}...`;
+
+      const res = await fetch('/api/workflows/compile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, compiler })
+      });
+      const data = await res.json();
+      if (data.result) {
+        outBox.textContent = data.result.output || 'Success with no warnings.';
+      } else {
+        outBox.textContent = 'Error: ' + (data.error || 'Compilation failed');
+      }
+    }
+
+    async function runDecompiler() {
+      const target = document.getElementById('decompile-target').value.trim();
+      const outBox = document.getElementById('decompile-output');
+      outBox.textContent = 'Decompiling bytecode...';
+
+      const res = await fetch('/api/workflows/decompile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target, rpc: currentRpc })
+      });
+      const data = await res.json();
+      if (data.result) {
+        outBox.textContent = data.result.source || data.result.disassembly || 'No output.';
+      } else {
+        outBox.textContent = 'Error: ' + data.error;
+      }
+    }
+
+    async function runScaffold(kind, name) {
+      const status = document.getElementById('scaffold-status');
+      status.textContent = `Scaffolding ${kind} project \`${name}\`...`;
+
+      const res = await fetch('/api/workflows/scaffold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, name })
+      });
+      const data = await res.json();
+      if (data.success) {
+        status.textContent = `Created ${kind} at: ${data.path}`;
+      } else {
+        status.textContent = `Error: ${data.error}`;
+      }
+    }
+
+    // Auto refresh
+    setInterval(() => {
+      checkDevnetStatus();
+      if (!document.getElementById('tab-chain').classList.contains('hidden')) {
+        refreshChainInfo();
+      }
+    }, 4000);
+
+    // Initial load
+    fetchRepos();
+    checkDevnetStatus();
+    refreshChainInfo();
+  </script>
+  <!-- Update Pipeline Modal -->
+  <div id="update-modal" class="fixed inset-0 bg-black/75 z-50 flex items-center justify-center p-6 hidden">
+    <div class="bg-dark-900 border border-slate-700 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-850">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i>
+          Streamlined Suite Updater & Rebuilder
+        </h3>
+        <button onclick="document.getElementById('update-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto flex-1 bg-slate-950">
+        <pre id="update-modal-log" class="mono text-xs text-emerald-400/90 whitespace-pre-wrap leading-relaxed">Initializing...</pre>
+      </div>
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-900 flex justify-end">
+        <button onclick="document.getElementById('update-modal').classList.add('hidden')" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-semibold">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
