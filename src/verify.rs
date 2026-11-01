@@ -50,6 +50,8 @@ pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Resu
 
     let target_content = if target_path.exists() {
         std::fs::read_to_string(target_path).unwrap_or_default()
+    } else if target_str.contains("contract ") || target_str.contains("function ") {
+        target_str.clone()
     } else {
         String::new()
     };
@@ -144,6 +146,8 @@ pub fn fuzz_contract(target_path: &Path, iterations: usize, _seed: Option<u64>) 
 
     let target_content = if target_path.exists() {
         std::fs::read_to_string(target_path).unwrap_or_default()
+    } else if target_str.contains("contract ") || target_str.contains("function ") {
+        target_str.clone()
     } else {
         String::new()
     };

@@ -465,12 +465,16 @@ async fn api_bytecode_inspect(State(_s): State<AppState>, Json(req): Json<Byteco
 
 #[derive(Deserialize)]
 struct VerifyProveRequest {
-    target: String,
+    #[serde(default)]
+    target: Option<String>,
+    #[serde(default)]
+    source: Option<String>,
     invariant: Option<String>,
 }
 
 async fn api_verify_prove(State(_s): State<AppState>, Json(req): Json<VerifyProveRequest>) -> Json<Value> {
-    let path = std::path::Path::new(&req.target);
+    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    let path = std::path::Path::new(&target);
     match crate::verify::verify_contract(path, req.invariant.as_deref()) {
         Ok(rep) => Json(json!({ "success": true, "report": rep })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -479,12 +483,16 @@ async fn api_verify_prove(State(_s): State<AppState>, Json(req): Json<VerifyProv
 
 #[derive(Deserialize)]
 struct VerifyFuzzRequest {
-    target: String,
+    #[serde(default)]
+    target: Option<String>,
+    #[serde(default)]
+    source: Option<String>,
     runs: Option<usize>,
 }
 
 async fn api_verify_fuzz(State(_s): State<AppState>, Json(req): Json<VerifyFuzzRequest>) -> Json<Value> {
-    let path = std::path::Path::new(&req.target);
+    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    let path = std::path::Path::new(&target);
     let runs = req.runs.unwrap_or(5000);
     match crate::verify::fuzz_contract(path, runs, None) {
         Ok(rep) => Json(json!({ "success": true, "report": rep })),
