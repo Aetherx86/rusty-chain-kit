@@ -63,9 +63,17 @@ fn test_rpc_lookup_builtin_node() {
     assert_eq!(res.via, "builtin:node");
 }
 
+fn isolated_ws() -> (tempfile::TempDir, Workspace) {
+    let tmp = tempfile::tempdir().unwrap();
+    let p = tmp.path().join("para.toml");
+    std::fs::write(&p, "[workspace]\nroot = \".\"\nstate_dir = \".para\"\n").unwrap();
+    let ws = Workspace::load(&p).unwrap();
+    (tmp, ws)
+}
+
 #[test]
 fn test_rpc_add_lookup_and_remove() {
-    let ws = Workspace::discover().unwrap();
+    let (_tmp, ws) = isolated_ws();
     let alias = "testnet-temp-suite";
     let target = "http://127.0.0.1:7777";
 
@@ -85,8 +93,7 @@ fn test_rpc_add_lookup_and_remove() {
 
 #[test]
 fn test_rpc_set_and_clear_default() {
-    let ws = Workspace::discover().unwrap();
-    let original = ws.load_config().rpc.default;
+    let (_tmp, ws) = isolated_ws();
 
     // Set default to mainnet URL
     let target = "https://rpc.ankr.com/eth";
@@ -96,9 +103,6 @@ fn test_rpc_set_and_clear_default() {
     // Clear default
     set_default(&ws, None).unwrap();
     assert!(ws.load_config().rpc.default.is_none());
-
-    // Restore original if there was one
-    let _ = set_default(&ws, original);
 }
 
 #[test]

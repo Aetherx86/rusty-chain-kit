@@ -304,7 +304,7 @@ fn test_cli_chain_block() {
 fn test_cli_chain_tx() {
     let cli = Cli::try_parse_from(["para", "chain", "tx", "0x1234567890abcdef"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Tx { hash }, .. }) => {
+        Commands::Chain(ChainArgs { action: ChainSubcommand::Tx { hash, .. }, .. }) => {
             assert_eq!(hash, "0x1234567890abcdef");
         }
         _ => panic!("Expected chain tx"),
@@ -315,7 +315,7 @@ fn test_cli_chain_tx() {
 fn test_cli_chain_address_and_code() {
     let cli = Cli::try_parse_from(["para", "chain", "address", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Address { address }, .. }) => {
+        Commands::Chain(ChainArgs { action: ChainSubcommand::Address { address, .. }, .. }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
         }
         _ => panic!("Expected chain address"),
@@ -323,7 +323,7 @@ fn test_cli_chain_address_and_code() {
 
     let cli_code = Cli::try_parse_from(["para", "chain", "code", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"]).unwrap();
     match cli_code.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Code { address }, .. }) => {
+        Commands::Chain(ChainArgs { action: ChainSubcommand::Code { address, .. }, .. }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
         }
         _ => panic!("Expected chain code"),
@@ -346,7 +346,7 @@ fn test_cli_compile() {
 fn test_cli_audit() {
     let cli = Cli::try_parse_from(["para", "audit", "contracts/"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Audit(rusty_chain_kit::cli::AuditArgs { path }) => {
+        Commands::Audit(rusty_chain_kit::cli::AuditArgs { path, .. }) => {
             assert_eq!(path.to_str().unwrap(), "contracts/");
         }
         _ => panic!("Expected audit"),

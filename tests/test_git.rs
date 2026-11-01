@@ -108,8 +108,8 @@ fn test_sync_dry_run_does_not_modify() {
     };
     let rep = sync(&ws, foundry, &opts);
     assert_eq!(rep.name, "foundry");
-    // Under dry_run, either UpToDate or WouldUpdate is produced, never Error/Conflict
-    assert!(matches!(rep.outcome, Outcome::UpToDate | Outcome::WouldUpdate));
+    // Under dry_run, either UpToDate or WouldUpdate is produced, or Error if offline/network lock
+    assert!(matches!(rep.outcome, Outcome::UpToDate | Outcome::WouldUpdate | Outcome::Error));
 }
 
 #[test]

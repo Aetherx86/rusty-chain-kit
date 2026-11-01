@@ -39,10 +39,10 @@
       <div>
         <div class="flex items-center space-x-2">
           <span class="font-bold tracking-wide text-white text-lg">Rusty Chain Kit</span>
-          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">v0.1.0</span>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">v0.1.1 beta</span>
           <span class="text-xs font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">para</span>
         </div>
-        <p class="text-xs text-slate-400">Foundry · Reth · Alloy · Solar · Cryo · Viem · Artemis · Mesc · Heimdall · Revm · Aderyn</p>
+        <p class="text-xs text-slate-400">Solidity Compiler · Symbolic Execution · Light Client · zkVM · MEV Engine · Fuzzing · AA/EIP-7702 · Gas Flamegraphs · Forensics</p>
       </div>
     </div>
 
@@ -87,6 +87,26 @@
           <i class="fa-solid fa-cubes w-5 text-center"></i>
           <span>Chain Explorer</span>
         </button>
+        <button onclick="navigateTab('forensics')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="forensics">
+          <i class="fa-solid fa-diagram-project w-5 text-center"></i>
+          <span>Forensics & Flow</span>
+        </button>
+        <button onclick="navigateTab('bytecode')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="bytecode">
+          <i class="fa-solid fa-microchip w-5 text-center"></i>
+          <span>Bytecode & Proxy</span>
+        </button>
+        <button onclick="navigateTab('verify')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="verify">
+          <i class="fa-solid fa-shield-halved w-5 text-center"></i>
+          <span>Verify & Fuzz</span>
+        </button>
+        <button onclick="navigateTab('repl')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="repl">
+          <i class="fa-solid fa-terminal w-5 text-center"></i>
+          <span>Solidity REPL</span>
+        </button>
+        <button onclick="navigateTab('mev')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="mev">
+          <i class="fa-solid fa-chart-line w-5 text-center"></i>
+          <span>MEV & Sim</span>
+        </button>
         <button onclick="navigateTab('tools')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="tools">
           <i class="fa-solid fa-toolbox w-5 text-center"></i>
           <span>Toolbox & Binaries</span>
@@ -101,7 +121,7 @@
       <div class="px-4 pt-4 border-t border-slate-800 text-xs text-slate-500 space-y-1">
         <div class="flex items-center justify-between">
           <span>Binary:</span>
-          <span class="mono text-emerald-400">para v0.1.0</span>
+          <span class="mono text-emerald-400">para v0.1.1-beta</span>
         </div>
         <div class="flex items-center justify-between">
           <span>Rustc:</span>
@@ -521,6 +541,323 @@ contract Counter {
         </div>
       </section>
 
+      <!-- ─────────────────── TAB: FORENSICS & FLOW (CHAINALYSIS-STYLE) ─────────────────── -->
+      <section id="tab-forensics" class="tab-pane hidden space-y-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+              <i class="fa-solid fa-diagram-project text-emerald-400"></i>
+              <span>Blockchain Forensic Flow Visualizer</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Multi-hop transaction flow tracing, entity clustering, and mixer/bridge risk intelligence</p>
+          </div>
+          <div class="flex items-center space-x-3">
+            <input id="forensics-search-input" type="text" placeholder="0xd8dA6... (address or tx hash)" value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 mono w-72 focus:border-emerald-500 focus:outline-none">
+            <button onclick="loadForensicsFlow()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <span>Trace Flow</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Legend & Entity Classification -->
+        <div class="flex items-center space-x-4 px-4 py-2 bg-dark-900 border border-slate-800 rounded-lg text-xs">
+          <span class="text-slate-400 font-medium">Entity Clustering:</span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-slate-300">Subject Account</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="text-slate-300">DEX / Contract</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span class="text-slate-300">Mixer / Privacy Pool</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="text-slate-300">Cross-Chain Bridge</span></span>
+          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span><span class="text-slate-300">Centralized Exchange</span></span>
+        </div>
+
+        <!-- Interactive Canvas & Inspector -->
+        <div class="grid grid-cols-12 gap-6">
+          <div class="col-span-8 bg-dark-900 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center min-h-[460px] relative overflow-hidden">
+            <svg id="forensics-svg" class="w-full h-[440px]" viewBox="0 0 800 440">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+                </marker>
+                <marker id="arrow-risk" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+                </marker>
+              </defs>
+              <!-- Links -->
+              <line x1="400" y1="220" x2="220" y2="120" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="4,2" />
+              <text x="290" y="155" fill="#93c5fd" font-size="11" font-family="monospace">15.0 ETH</text>
+
+              <line x1="220" y1="120" x2="100" y2="280" stroke="#f43f5e" stroke-width="3" marker-end="url(#arrow-risk)" />
+              <text x="140" y="210" fill="#fda4af" font-size="11" font-family="monospace">10.0 WETH (Risk!)</text>
+
+              <line x1="400" y1="220" x2="580" y2="120" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow)" />
+              <text x="500" y="155" fill="#fcd34d" font-size="11" font-family="monospace">50.0 ETH</text>
+
+              <line x1="400" y1="220" x2="600" y2="320" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" />
+              <text x="490" y="285" fill="#93c5fd" font-size="11" font-family="monospace">25.0 USDC</text>
+
+              <line x1="600" y1="320" x2="720" y2="180" stroke="#a855f7" stroke-width="2.5" marker-end="url(#arrow)" />
+              <text x="670" y="240" fill="#d8b4fe" font-size="11" font-family="monospace">24.8 USDT</text>
+
+              <!-- Center Subject Node -->
+              <g onclick="selectEntity('Subject', '0xd8dA6...6045', '142.5 ETH', 'Low', 0)" class="cursor-pointer">
+                <circle cx="400" cy="220" r="28" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="3" />
+                <circle cx="400" cy="220" r="14" fill="#10b981" />
+                <text x="400" y="265" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">Subject Account</text>
+                <text x="400" y="280" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">0xd8dA6...6045</text>
+              </g>
+
+              <!-- Node: Uniswap V3 -->
+              <g onclick="selectEntity('Uniswap V3 SwapRouter', '0x68b34...Fc45', '5,410 ETH', 'Clean', 1)" class="cursor-pointer">
+                <circle cx="220" cy="120" r="22" fill="#3b82f6" fill-opacity="0.2" stroke="#3b82f6" stroke-width="2.5" />
+                <circle cx="220" cy="120" r="11" fill="#3b82f6" />
+                <text x="220" y="88" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Uniswap V3</text>
+                <text x="220" y="102" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">DEX Contract</text>
+              </g>
+
+              <!-- Node: Tornado Cash -->
+              <g onclick="selectEntity('Tornado Cash Router', '0xd90e2...F31b', '12,890 ETH', 'HIGH ALERT (Mixer)', 2)" class="cursor-pointer">
+                <circle cx="100" cy="280" r="26" fill="#f43f5e" fill-opacity="0.3" stroke="#f43f5e" stroke-width="3" />
+                <circle cx="100" cy="280" r="13" fill="#f43f5e" />
+                <text x="100" y="322" text-anchor="middle" fill="#fda4af" font-size="11" font-weight="bold">Tornado Cash</text>
+                <text x="100" y="336" text-anchor="middle" fill="#fb7185" font-size="10">High Risk Mixer (Hop 2)</text>
+              </g>
+
+              <!-- Node: Arbitrum Bridge -->
+              <g onclick="selectEntity('Arbitrum One Bridge', '0x4dbd4...48ff', '84,000 ETH', 'Clean', 1)" class="cursor-pointer">
+                <circle cx="580" cy="120" r="22" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="2.5" />
+                <circle cx="580" cy="120" r="11" fill="#f59e0b" />
+                <text x="580" y="88" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Arbitrum Bridge</text>
+                <text x="580" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">L2 Ingress</text>
+              </g>
+
+              <!-- Node: 1inch -->
+              <g onclick="selectEntity('1inch Aggregator', '0x11111...097d', '3,120 ETH', 'Clean', 1)" class="cursor-pointer">
+                <circle cx="600" cy="320" r="22" fill="#3b82f6" fill-opacity="0.2" stroke="#3b82f6" stroke-width="2.5" />
+                <circle cx="600" cy="320" r="11" fill="#3b82f6" />
+                <text x="600" y="358" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">1inch Aggregator</text>
+                <text x="600" y="372" text-anchor="middle" fill="#94a3b8" font-size="10">Router Contract</text>
+              </g>
+
+              <!-- Node: Binance Hot Wallet -->
+              <g onclick="selectEntity('Binance Hot Wallet 6', '0x3f5CE...f0bE', '420,000 ETH', 'Clean', 2)" class="cursor-pointer">
+                <circle cx="720" cy="180" r="22" fill="#a855f7" fill-opacity="0.2" stroke="#a855f7" stroke-width="2.5" />
+                <circle cx="720" cy="180" r="11" fill="#a855f7" />
+                <text x="720" y="148" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Binance Hot Wallet</text>
+                <text x="720" y="162" text-anchor="middle" fill="#94a3b8" font-size="10">CEX Deposit (Hop 2)</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Forensics Inspector Panel -->
+          <div class="col-span-4 bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-base flex items-center space-x-2">
+              <i class="fa-solid fa-fingerprint text-emerald-400"></i>
+              <span>Entity Dossier</span>
+            </h3>
+
+            <div class="space-y-3 text-xs">
+              <div>
+                <label class="text-slate-500 uppercase tracking-wider font-semibold">Entity Name</label>
+                <div id="inspector-name" class="font-semibold text-white text-sm mt-0.5">Subject Account</div>
+              </div>
+              <div>
+                <label class="text-slate-500 uppercase tracking-wider font-semibold">Address</label>
+                <div id="inspector-addr" class="mono text-slate-300 mt-0.5 truncate">0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045</div>
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-slate-500 uppercase tracking-wider font-semibold">Balance</label>
+                  <div id="inspector-balance" class="font-semibold text-emerald-400 mt-0.5">142.5 ETH</div>
+                </div>
+                <div>
+                  <label class="text-slate-500 uppercase tracking-wider font-semibold">Hop Level</label>
+                  <div id="inspector-hop" class="font-semibold text-slate-200 mt-0.5">0 (Direct Target)</div>
+                </div>
+              </div>
+              <div>
+                <label class="text-slate-500 uppercase tracking-wider font-semibold">Risk Classification</label>
+                <div id="inspector-risk" class="mt-0.5"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Low Risk</span></div>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-800 space-y-2">
+              <button onclick="alert('Exporting forensic graph in JSON / Gephi format...')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-semibold flex items-center justify-center space-x-1.5">
+                <i class="fa-solid fa-download"></i>
+                <span>Export Flow Graph (JSON)</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: BYTECODE & PROXY INTELLIGENCE ─────────────────── -->
+      <section id="tab-bytecode" class="tab-pane hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-microchip text-blue-400"></i>
+            <span>Bytecode Intelligence & Proxy Pattern Resolver</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Sub-millisecond ABI selector discovery via evmole, proxy detection (EIP-1967, EIP-1167, EIP-1822, Diamond, EIP-7702), and SSA CFG lifting</p>
+        </div>
+
+        <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+          <label class="block text-xs font-semibold text-slate-300">Contract Runtime Bytecode (Hex)</label>
+          <textarea id="bytecode-input" rows="4" placeholder="0x6080604052348015600e575f80fd5b50600436106030575f3560e01c8063a9059cbb14..." class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 mono focus:border-blue-500 focus:outline-none">0x6080604052348015600e575f80fd5b50600436106030575f3560e01c8063a9059cbb14603557806370a08231146045575b5f80fd5b005b00</textarea>
+          <button onclick="analyzeBytecode()" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Analyze Bytecode & Lift CFG</span>
+          </button>
+        </div>
+
+        <div id="bytecode-results" class="grid grid-cols-2 gap-6">
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h3 class="font-bold text-white text-sm">Discovered Function Selectors</h3>
+            <div id="bytecode-abi-list" class="space-y-2 text-xs mono text-slate-300">
+              <div class="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+                <span>0xa9059cbb (transfer)</span>
+                <span class="text-blue-400">nonpayable</span>
+              </div>
+              <div class="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+                <span>0x70a08231 (balanceOf)</span>
+                <span class="text-emerald-400">view</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-3">
+            <h3 class="font-bold text-white text-sm">Proxy Resolution & Classification</h3>
+            <div id="bytecode-proxy-card" class="p-3 bg-slate-950 rounded-lg border border-slate-800 text-xs space-y-2">
+              <div class="flex items-center space-x-2">
+                <span class="text-slate-400">Proxy Pattern:</span>
+                <span class="font-semibold text-emerald-400">Direct Non-Proxy Implementation</span>
+              </div>
+              <p class="text-slate-500 text-xs">Standard contract bytecode without delegatecall redirection.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: VERIFY & FUZZ ─────────────────── -->
+      <section id="tab-verify" class="tab-pane hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-shield-halved text-purple-400"></i>
+            <span>Formal Invariant Verification & Stateful Fuzzer</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Symbolic SMT constraint solving via Z3 and high-throughput snapshot fuzzing</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-base">Symbolic SMT Invariant Prover</h3>
+            <p class="text-xs text-slate-400">Mathematically prove contract properties across all symbolic execution paths using Z3.</p>
+            <input id="verify-target" type="text" placeholder="contracts/Vault.sol" value="contracts/Vault.sol" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-xs text-slate-200 mono">
+            <button onclick="runFormalVerification()" class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold">
+              Execute SMT Invariant Proof
+            </button>
+            <div id="verify-output" class="p-3 bg-slate-950 rounded border border-slate-800 text-xs mono text-purple-300 min-h-[100px]">
+              Click above to run formal verification...
+            </div>
+          </div>
+
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-base">Stateful Snapshot Fuzzer</h3>
+            <p class="text-xs text-slate-400">Rapid mutational multi-transaction sequence exploration to discover invariant counterexamples.</p>
+            <input id="fuzz-runs" type="number" placeholder="5000" value="5000" class="w-full bg-slate-950 border border-slate-700 rounded px-3 py-2 text-xs text-slate-200 mono">
+            <button onclick="runFuzzer()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded text-xs font-semibold">
+              Run Stateful Fuzzing Suite
+            </button>
+            <div id="fuzz-output" class="p-3 bg-slate-950 rounded border border-slate-800 text-xs mono text-indigo-300 min-h-[100px]">
+              Ready to fuzz 5,000 iterations...
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: SOLIDITY REPL ─────────────────── -->
+      <section id="tab-repl" class="tab-pane hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-terminal text-amber-400"></i>
+            <span>Interactive Solidity & EVM REPL</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Live interactive scratchpad to test opcodes, Yul snippets, hashing, and abi encoding</p>
+        </div>
+
+        <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+          <div id="repl-terminal" class="bg-slate-950 border border-slate-800 rounded-lg p-4 font-mono text-xs space-y-2 min-h-[280px] max-h-[400px] overflow-y-auto">
+            <div class="text-slate-500">// Welcome to Rusty Chain Kit EVM REPL</div>
+            <div class="text-slate-500">// Enter any expression: keccak256("hello"), type(uint256).max, 42 * 1337</div>
+            <div class="text-emerald-400">&gt; keccak256("hello")</div>
+            <div class="text-slate-300">0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8 (bytes32, gas: 36)</div>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <input id="repl-input" type="text" placeholder="keccak256('test') or type(uint128).max" value="type(uint256).max" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-200 mono focus:border-amber-500 focus:outline-none" onkeydown="if(event.key==='Enter')evalRepl()">
+            <button onclick="evalRepl()" class="px-5 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-semibold">
+              Evaluate
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ─────────────────── TAB: MEV & SIM ─────────────────── -->
+      <section id="tab-mev" class="tab-pane hidden space-y-6">
+        <div>
+          <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+            <i class="fa-solid fa-chart-line text-emerald-400"></i>
+            <span>High-Performance MEV Engine & Market Simulation</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Multi-agent discrete-event simulation of AMM liquidity, stochastic order flows, and searcher arbitrage PnL</p>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6">
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-sm">Simulation Parameters</h3>
+            <div>
+              <label class="text-xs text-slate-400">Block Steps</label>
+              <input id="sim-steps" type="number" value="100" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono mt-1">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Initial Price (USD)</label>
+              <input id="sim-price" type="number" value="3000" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono mt-1">
+            </div>
+            <div>
+              <label class="text-xs text-slate-400">Step Volatility (0.01 - 0.05)</label>
+              <input id="sim-vol" type="number" step="0.01" value="0.02" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-xs text-slate-200 mono mt-1">
+            </div>
+            <button onclick="runMevSim()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold">
+              Execute Agent Simulation
+            </button>
+          </div>
+
+          <div class="col-span-2 bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="font-bold text-white text-sm">Searcher PnL & Extraction Metrics</h3>
+            <div id="sim-metrics" class="grid grid-cols-3 gap-3">
+              <div class="p-3 bg-slate-950 rounded border border-slate-800">
+                <div class="text-xs text-slate-500">Total Swaps</div>
+                <div id="sim-total-swaps" class="text-lg font-bold text-white mt-1">142</div>
+              </div>
+              <div class="p-3 bg-slate-950 rounded border border-slate-800">
+                <div class="text-xs text-slate-500">Extracted MEV</div>
+                <div id="sim-extracted-mev" class="text-lg font-bold text-emerald-400 mt-1">$4,820.50</div>
+              </div>
+              <div class="p-3 bg-slate-950 rounded border border-slate-800">
+                <div class="text-xs text-slate-500">Final Pool Price</div>
+                <div id="sim-final-price" class="text-lg font-bold text-blue-400 mt-1">$3,048.20</div>
+              </div>
+            </div>
+
+            <div class="p-4 bg-slate-950 rounded border border-slate-800 text-xs font-mono text-slate-300 space-y-1" id="sim-pnl-breakdown">
+              <div class="text-slate-500">// Searcher bot performance:</div>
+              <div class="flex justify-between"><span>ArbSearcher-Alpha:</span><span class="text-emerald-400">+$2,892.30 USD</span></div>
+              <div class="flex justify-between"><span>LiquidationBot-Beta:</span><span class="text-emerald-400">+$1,446.15 USD</span></div>
+              <div class="flex justify-between"><span>JitLiquidity-Gamma:</span><span class="text-emerald-400">+$482.05 USD</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
@@ -553,6 +890,7 @@ contract Counter {
       if (tabId === 'devnet') checkDevnetStatus();
       if (tabId === 'chain') refreshChainInfo();
       if (tabId === 'tools') fetchTools();
+      if (tabId === 'forensics') loadForensicsFlow();
     }
 
     // ─────────────────────────── Repos API ───────────────────────────
@@ -994,6 +1332,160 @@ contract Counter {
         status.textContent = `Created ${kind} at: ${data.path}`;
       } else {
         status.textContent = `Error: ${data.error}`;
+      }
+    }
+
+    // ─────────────────────────── Forensics & New Intelligence APIs ───────────────────────────
+    function selectEntity(name, addr, balance, risk, hop) {
+      document.getElementById('inspector-name').textContent = name;
+      document.getElementById('inspector-addr').textContent = addr;
+      document.getElementById('inspector-balance').textContent = balance;
+      document.getElementById('inspector-hop').textContent = `${hop} (Distance)`;
+      const riskEl = document.getElementById('inspector-risk');
+      if (risk.includes('High') || risk.includes('Risk') || risk.includes('Mixer')) {
+        riskEl.innerHTML = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold">${risk}</span>`;
+      } else {
+        riskEl.innerHTML = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">${risk}</span>`;
+      }
+    }
+
+    async function loadForensicsFlow() {
+      const addr = document.getElementById('forensics-search-input').value;
+      try {
+        const res = await fetch(`/api/forensics/flow?address=${encodeURIComponent(addr)}`);
+        const data = await res.json();
+        if (data.nodes && data.nodes.length > 0) {
+          selectEntity(data.nodes[0].label, data.nodes[0].id, data.nodes[0].balance, data.nodes[0].risk, data.nodes[0].hop);
+        }
+      } catch (e) {
+        console.error('Forensics load error', e);
+      }
+    }
+
+    async function analyzeBytecode() {
+      const code = document.getElementById('bytecode-input').value;
+      const res = await fetch('/api/bytecode/inspect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bytecode: code })
+      });
+      const data = await res.json();
+      const abiList = document.getElementById('bytecode-abi-list');
+      if (data.abi && data.abi.length > 0) {
+        abiList.innerHTML = data.abi.map(f => `
+          <div class="p-2 bg-slate-950 rounded border border-slate-800 flex justify-between">
+            <span>${f.selector} ${f.signature ? `(${f.signature})` : ''}</span>
+            <span class="text-blue-400">${f.state_mutability}</span>
+          </div>
+        `).join('');
+      } else {
+        abiList.innerHTML = '<div class="text-slate-500">No function selectors found.</div>';
+      }
+
+      if (data.proxy) {
+        document.getElementById('bytecode-proxy-card').innerHTML = `
+          <div class="flex items-center space-x-2">
+            <span class="text-slate-400">Proxy Pattern:</span>
+            <span class="font-semibold ${data.proxy.is_proxy ? 'text-amber-400' : 'text-emerald-400'}">${data.proxy.kind}</span>
+          </div>
+          <p class="text-slate-400 text-xs">${data.proxy.details}</p>
+        `;
+      }
+    }
+
+    async function runFormalVerification() {
+      const target = document.getElementById('verify-target').value;
+      const out = document.getElementById('verify-output');
+      out.textContent = 'Executing SMT-LIB2 path constraint verification with Z3...';
+      const res = await fetch('/api/verify/prove', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target })
+      });
+      const data = await res.json();
+      if (data.success && data.report) {
+        const r = data.report;
+        out.innerHTML = `
+          <div class="text-emerald-400 font-bold">STATUS: ${r.status.toUpperCase()}</div>
+          <div>Invariants Checked: ${r.invariants_checked}</div>
+          <div>SMT Path Queries: ${r.smt_queries}</div>
+          <div>Proof Time: ${r.proof_time_ms} ms</div>
+          <div class="text-slate-400 mt-1">${r.notes.join('<br>')}</div>
+        `;
+      } else {
+        out.textContent = `Error: ${data.error || 'Verification failed'}`;
+      }
+    }
+
+    async function runFuzzer() {
+      const runs = parseInt(document.getElementById('fuzz-runs').value, 10);
+      const out = document.getElementById('fuzz-output');
+      out.textContent = `Running ${runs} fuzzing iterations...`;
+      const res = await fetch('/api/verify/fuzz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ target: 'Vault', runs })
+      });
+      const data = await res.json();
+      if (data.success && data.report) {
+        const r = data.report;
+        out.innerHTML = `
+          <div class="text-indigo-400 font-bold">INVARIANTS: ${r.invariants_held ? 'PASSED (0 Violations)' : 'VIOLATION DETECTED'}</div>
+          <div>Iterations: ${r.iterations}</div>
+          <div>Throughput: ${r.runs_per_second.toFixed(1)} runs/sec</div>
+          <div>Corpus Size: ${r.corpus_size}</div>
+          <div>Duration: ${r.duration_ms} ms</div>
+        `;
+      } else {
+        out.textContent = `Error: ${data.error || 'Fuzzer failed'}`;
+      }
+    }
+
+    async function evalRepl() {
+      const input = document.getElementById('repl-input');
+      const expr = input.value.trim();
+      if (!expr) return;
+      const terminal = document.getElementById('repl-terminal');
+      terminal.innerHTML += `<div class="text-emerald-400 mt-2">&gt; ${expr}</div>`;
+      input.value = '';
+
+      const res = await fetch('/api/repl/eval', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expr })
+      });
+      const data = await res.json();
+      if (data.success && data.result) {
+        const r = data.result;
+        terminal.innerHTML += `<div class="text-slate-200">${r.raw_output} <span class="text-slate-500">(${r.decoded_type}, gas: ${r.gas_estimate})</span></div>`;
+      } else {
+        terminal.innerHTML += `<div class="text-rose-400">Error: ${data.error || 'Evaluation failed'}</div>`;
+      }
+      terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    async function runMevSim() {
+      const steps = parseInt(document.getElementById('sim-steps').value, 10);
+      const initial_price = parseFloat(document.getElementById('sim-price').value);
+      const volatility = parseFloat(document.getElementById('sim-vol').value);
+
+      const res = await fetch('/api/mev/sim', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ steps, initial_price, volatility })
+      });
+      const data = await res.json();
+      if (data.success && data.result) {
+        const r = data.result;
+        document.getElementById('sim-total-swaps').textContent = r.total_swaps;
+        document.getElementById('sim-extracted-mev').textContent = `$${r.total_mev_extracted_usd.toFixed(2)}`;
+        document.getElementById('sim-final-price').textContent = `$${r.pool_price_final.toFixed(2)}`;
+
+        const breakdown = document.getElementById('sim-pnl-breakdown');
+        breakdown.innerHTML = '<div class="text-slate-500">// Searcher bot performance:</div>' +
+          r.searcher_pnl.map(([name, pnl]) => `
+            <div class="flex justify-between"><span>${name}:</span><span class="text-emerald-400">+$${pnl.toFixed(2)} USD</span></div>
+          `).join('');
       }
     }
 

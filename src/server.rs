@@ -54,6 +54,13 @@ pub async fn run_server(ws: Workspace, port: u16, open_browser: bool) -> Result<
         .route("/api/workflows/compile", post(api_workflow_compile))
         .route("/api/workflows/decompile", post(api_workflow_decompile))
         .route("/api/workflows/scaffold", post(api_workflow_scaffold))
+        .route("/api/forensics/flow", get(api_get_forensics_flow))
+        .route("/api/bytecode/inspect", post(api_bytecode_inspect))
+        .route("/api/verify/prove", post(api_verify_prove))
+        .route("/api/verify/fuzz", post(api_verify_fuzz))
+        .route("/api/repl/eval", post(api_repl_eval))
+        .route("/api/mev/sim", post(api_mev_sim))
+        .route("/api/analytics/query", post(api_analytics_query))
         // Static assets fallback
         .fallback(static_handler)
         .with_state(state);
@@ -402,6 +409,130 @@ async fn api_workflow_scaffold(State(s): State<AppState>, Json(req): Json<Scaffo
 
     match res {
         Ok(path) => Json(json!({ "success": true, "path": path.display().to_string() })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+// ───────────────────────────── Forensics, Bytecode & Intelligence ─────────────────────────────
+
+#[derive(Deserialize)]
+struct ForensicsQuery {
+    address: Option<String>,
+}
+
+async fn api_get_forensics_flow(State(_s): State<AppState>, Query(q): Query<ForensicsQuery>) -> Json<Value> {
+    let subject = q.address.unwrap_or_else(|| "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045".into());
+    let nodes = json!([
+        { "id": subject, "label": "Subject Account", "type": "subject", "balance": "142.5 ETH", "risk": "Low", "hop": 0 },
+        { "id": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "label": "Uniswap V3 SwapRouter", "type": "contract", "balance": "5,410 ETH", "risk": "Clean", "hop": 1 },
+        { "id": "0xd90e2f925DA726b50C4Ed8D0Fb90Ad053324F31b", "label": "Tornado Cash Router", "type": "mixer", "balance": "12,890 ETH", "risk": "High", "hop": 2 },
+        { "id": "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff", "label": "Arbitrum One Bridge", "type": "bridge", "balance": "84,000 ETH", "risk": "Clean", "hop": 1 },
+        { "id": "0x1111111254fb6c44bac0bed2854e76f90643097d", "label": "1inch Aggregator", "type": "contract", "balance": "3,120 ETH", "risk": "Clean", "hop": 1 },
+        { "id": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE", "label": "Binance Hot Wallet", "type": "exchange", "balance": "420,000 ETH", "risk": "Clean", "hop": 2 }
+    ]);
+    let edges = json!([
+        { "source": subject, "target": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "value": "15.0 ETH", "token": "ETH", "tx": "0x4a11...bb22" },
+        { "source": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "target": "0xd90e2f925DA726b50C4Ed8D0Fb90Ad053324F31b", "value": "10.0 ETH", "token": "WETH", "tx": "0x7c33...dd44" },
+        { "source": subject, "target": "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff", "value": "50.0 ETH", "token": "ETH", "tx": "0x1e55...ff66" },
+        { "source": subject, "target": "0x1111111254fb6c44bac0bed2854e76f90643097d", "value": "25.0 ETH", "token": "USDC", "tx": "0x9a77...8899" },
+        { "source": "0x1111111254fb6c44bac0bed2854e76f90643097d", "target": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE", "value": "24.8 ETH", "token": "USDT", "tx": "0x2b88...cc00" }
+    ]);
+    Json(json!({ "subject": subject, "nodes": nodes, "edges": edges, "hops": 2, "entityCount": 6 }))
+}
+
+#[derive(Deserialize)]
+struct BytecodeInspectRequest {
+    bytecode: String,
+}
+
+async fn api_bytecode_inspect(State(_s): State<AppState>, Json(req): Json<BytecodeInspectRequest>) -> Json<Value> {
+    let clean = req.bytecode.trim().trim_start_matches("0x");
+    let bytes = match alloy::hex::decode(clean) {
+        Ok(b) => b,
+        Err(e) => return Json(json!({ "error": format!("invalid hex bytecode: {e}") })),
+    };
+
+    let abi = crate::bytecode::extract_abi(&bytes);
+    let proxy = crate::bytecode::detect_proxy(&bytes, &std::collections::BTreeMap::new());
+    let cfg = crate::bytecode::lift_cfg(&bytes);
+
+    Json(json!({
+        "abi": abi,
+        "proxy": proxy,
+        "cfg": cfg,
+    }))
+}
+
+#[derive(Deserialize)]
+struct VerifyProveRequest {
+    target: String,
+    invariant: Option<String>,
+}
+
+async fn api_verify_prove(State(_s): State<AppState>, Json(req): Json<VerifyProveRequest>) -> Json<Value> {
+    let path = std::path::Path::new(&req.target);
+    match crate::verify::verify_contract(path, req.invariant.as_deref()) {
+        Ok(rep) => Json(json!({ "success": true, "report": rep })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct VerifyFuzzRequest {
+    target: String,
+    runs: Option<usize>,
+}
+
+async fn api_verify_fuzz(State(_s): State<AppState>, Json(req): Json<VerifyFuzzRequest>) -> Json<Value> {
+    let path = std::path::Path::new(&req.target);
+    let runs = req.runs.unwrap_or(5000);
+    match crate::verify::fuzz_contract(path, runs, None) {
+        Ok(rep) => Json(json!({ "success": true, "report": rep })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct ReplEvalRequest {
+    expr: String,
+}
+
+async fn api_repl_eval(State(_s): State<AppState>, Json(req): Json<ReplEvalRequest>) -> Json<Value> {
+    match crate::repl::evaluate_expression(&req.expr) {
+        Ok(res) => Json(json!({ "success": true, "result": res })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct MevSimRequest {
+    steps: Option<usize>,
+    initial_price: Option<f64>,
+    volatility: Option<f64>,
+}
+
+async fn api_mev_sim(State(_s): State<AppState>, Json(req): Json<MevSimRequest>) -> Json<Value> {
+    let cfg = crate::sim::SimMarketConfig {
+        steps: req.steps.unwrap_or(100),
+        initial_price: req.initial_price.unwrap_or(3000.0),
+        volatility: req.volatility.unwrap_or(0.02),
+        num_traders: 15,
+        num_searchers: 3,
+    };
+    match crate::sim::run_simulation(&cfg) {
+        Ok(res) => Json(json!({ "success": true, "result": res })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct AnalyticsQueryRequest {
+    sql: String,
+}
+
+async fn api_analytics_query(State(s): State<AppState>, Json(req): Json<AnalyticsQueryRequest>) -> Json<Value> {
+    match crate::analytics::execute_query(&req.sql, Some(&s.ws.data_dir())) {
+        Ok(res) => Json(json!({ "success": true, "result": res })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
     }
 }

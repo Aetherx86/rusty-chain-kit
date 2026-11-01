@@ -1,6 +1,6 @@
 [package]
 name = "rusty-chain-kit"
-version = "0.1.0"
+version = "0.1.1-beta"
 edition = "2024"
 rust-version = "1.94"
 description = "All-in-one command center (CLI + GUI) and unified developer toolkit for the Paradigm and Ethereum Rust ecosystem"
@@ -25,8 +25,11 @@ alloy = { version = "2.5.0", features = [
     "pubsub",
     "network",
     "rpc-types",
+    "signer-local",
 ] }
 mesc = { version = "0.3.0" }
+evmole = "0.9.4"
+alloy-eip7702 = { version = "0.6.3", features = ["serde", "k256"] }
 
 anyhow = "1"
 axum = "0.8"

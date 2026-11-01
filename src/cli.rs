@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[command(
     name = "para",
     author = "Paradigm Suite",
-    version = "0.1.0",
+    version = "0.1.1-beta",
     about = "All-in-one command center (CLI + GUI) for the Paradigm / Ethereum Rust + TS toolchain",
     long_about = "para unites Foundry, Reth, Alloy, Solar, Cryo, Viem, Artemis, MESC, and Heimdall into a single unified CLI and Web GUI."
 )]
@@ -50,8 +50,38 @@ pub enum Commands {
     /// Compile Solidity contracts using Solar (Rust compiler) or Forge
     Compile(CompileArgs),
 
-    /// Run static security audit on Solidity code (Aderyn / Solar linter)
+    /// Run static security audit or dynamic fuzzing on Solidity code
     Audit(AuditArgs),
+
+    /// Formally verify invariants and contract properties using symbolic SMT execution
+    Verify(VerifyArgs),
+
+    /// Interactive EVM & Solidity REPL session or expression evaluation
+    Repl(ReplArgs),
+
+    /// Native Account Abstraction (ERC-4337) and EIP-7702 authorization toolkit
+    Aa(AaArgs),
+
+    /// Opcode-level transaction execution trace
+    Trace(TraceArgs),
+
+    /// Cycle-accurate opcode gas profiling and flamegraph generation
+    Profile(ProfileArgs),
+
+    /// Revert autopsy and custom error diagnostics
+    Autopsy(AutopsyArgs),
+
+    /// Run analytical SQL queries directly over extracted Parquet/JSON blockchain datasets
+    Query(QueryArgs),
+
+    /// Run or backtest MEV searcher strategies and mempool pipelines
+    Mev(MevArgs),
+
+    /// Agent-based market dynamics and multi-agent AMM simulation
+    Sim(SimArgs),
+
+    /// Zero-Knowledge Virtual Machine (zkVM) compilation and proof generation
+    Zk(ZkArgs),
 
     /// Decompile EVM bytecode to Solidity via Heimdall or disassemble via Cast
     Decompile(DecompileArgs),
@@ -59,7 +89,7 @@ pub enum Commands {
     /// Extract blockchain datasets (blocks, txs, logs) via Cryo
     Extract(ExtractArgs),
 
-    /// Scaffold new projects (Artemis bot, Viem script, Foundry/Solar contract)
+    /// Scaffold new projects (Artemis bot, Viem script, Foundry/Solar contract, SP1 zkVM)
     New(NewArgs),
 
     /// Launch the embedded Web GUI Dashboard
@@ -245,6 +275,16 @@ pub enum RpcSubcommand {
     Remove {
         name: String,
     },
+    /// Perform trustless Merkle-Patricia Trie proof validation against state root
+    Trustless {
+        address: String,
+        #[arg(long)]
+        block: Option<u64>,
+        #[arg(long)]
+        expected_root: Option<String>,
+        #[arg(long)]
+        rpc: Option<String>,
+    },
 }
 
 // ───────────────────────────── Devnet ─────────────────────────────
@@ -345,14 +385,38 @@ pub enum ChainSubcommand {
     /// Inspect transaction details, status, and receipt
     Tx {
         hash: String,
+        /// Decode Account Abstraction envelopes (EIP-7702 authorizations, EntryPoint UserOps)
+        #[arg(long)]
+        decode_aa: bool,
+        /// Output formatted JSON
+        #[arg(long)]
+        json: bool,
     },
     /// Inspect account address (balance, nonce, code size, contract status)
     Address {
         address: String,
+        /// Run deep bytecode and proxy pattern inspection
+        #[arg(long)]
+        inspect: bool,
+        /// Output formatted JSON
+        #[arg(long)]
+        json: bool,
     },
     /// Fetch runtime bytecode for a contract address
     Code {
         address: String,
+        /// Check proxy implementation slots (EIP-1967, EIP-1167, EIP-1822, Diamond, EIP-7702)
+        #[arg(long)]
+        proxy: bool,
+        /// Extract ABI function selectors and state mutability
+        #[arg(long)]
+        abi: bool,
+        /// Lift bytecode into a Control Flow Graph (CFG) basic blocks
+        #[arg(long)]
+        cfg: bool,
+        /// Output formatted JSON
+        #[arg(long)]
+        json: bool,
     },
     /// Stream new blocks as they are mined
     Watch,
@@ -374,6 +438,177 @@ pub struct AuditArgs {
     /// Path to project to audit
     #[arg(default_value = ".")]
     pub path: PathBuf,
+    /// Run stateful snapshot fuzzing against contract invariants
+    #[arg(long)]
+    pub fuzz: bool,
+    /// Formally prove contract invariants using symbolic execution (Z3 SMT solver)
+    #[arg(long)]
+    pub prove: bool,
+    /// Number of fuzzing iterations
+    #[arg(long)]
+    pub runs: Option<usize>,
+}
+
+#[derive(Args)]
+pub struct VerifyArgs {
+    /// Path to contract or test file to verify
+    pub target: PathBuf,
+    /// Specific invariant or property function name to prove
+    #[arg(long, short)]
+    pub invariant: Option<String>,
+    /// Output raw SMT-LIB2 verification report JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct ReplArgs {
+    /// Evaluate a single Solidity expression or opcode snippet and exit
+    #[arg(long, short)]
+    pub eval: Option<String>,
+}
+
+#[derive(Args)]
+pub struct AaArgs {
+    #[command(subcommand)]
+    pub action: AaSubcommand,
+}
+
+#[derive(Subcommand)]
+pub enum AaSubcommand {
+    /// Generate and sign an EIP-7702 Authorization tuple
+    GenerateAuth {
+        #[arg(long)]
+        chain_id: u64,
+        #[arg(long)]
+        address: String,
+        #[arg(long)]
+        nonce: u64,
+        #[arg(long)]
+        private_key: String,
+    },
+    /// Simulate and validate a bundle of ERC-4337 UserOperations
+    Bundle {
+        /// Path to JSON file containing array of UserOperations (or uses sample bundle)
+        file: Option<PathBuf>,
+        /// Output formatted JSON
+        #[arg(long)]
+        json: bool,
+    },
+}
+
+#[derive(Args)]
+pub struct TraceArgs {
+    /// Transaction hash or address to trace
+    pub tx_or_call: String,
+    /// RPC endpoint to target
+    #[arg(long, short)]
+    pub rpc: Option<String>,
+    /// Output trace tree as JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct ProfileArgs {
+    /// Transaction hash or address to profile
+    pub tx_or_call: String,
+    /// RPC endpoint to target
+    #[arg(long, short)]
+    pub rpc: Option<String>,
+    /// Export Speedscope/D3 compatible flamegraph JSON to file
+    #[arg(long, short)]
+    pub flamegraph: Option<PathBuf>,
+    /// Output profile statistics as JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct AutopsyArgs {
+    /// Transaction hash or hex revert data
+    pub tx_or_revert: String,
+    /// RPC endpoint to target
+    #[arg(long, short)]
+    pub rpc: Option<String>,
+    /// Output autopsy diagnostics as JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct QueryArgs {
+    /// Analytical SQL query to execute (e.g. SELECT * FROM blocks WHERE gas_used > 1000000)
+    pub sql: String,
+    /// Root data directory containing extracted Parquet/JSON datasets
+    #[arg(long, short)]
+    pub data_dir: Option<PathBuf>,
+    /// Format output as JSON
+    #[arg(long)]
+    pub json: bool,
+    /// Format output as CSV
+    #[arg(long)]
+    pub csv: bool,
+}
+
+#[derive(Args)]
+pub struct MevArgs {
+    #[command(subcommand)]
+    pub action: MevSubcommand,
+}
+
+#[derive(Subcommand)]
+pub enum MevSubcommand {
+    /// Run an MEV searcher strategy pipeline against live mempool
+    Run {
+        /// Strategy script or configuration file
+        strategy: PathBuf,
+        /// WebSocket or HTTP RPC endpoint
+        #[arg(long, short)]
+        rpc: Option<String>,
+        /// Simulate execution without broadcasting bundles
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Backtest an MEV strategy across historical block range
+    Backtest {
+        strategy: PathBuf,
+        #[arg(long, default_value_t = 19000000)]
+        start_block: u64,
+        #[arg(long, default_value_t = 19000100)]
+        end_block: u64,
+    },
+}
+
+#[derive(Args)]
+pub struct SimArgs {
+    /// Number of simulated blocks to run
+    #[arg(long, default_value_t = 100)]
+    pub steps: usize,
+    /// Initial reference asset price in USD
+    #[arg(long, default_value_t = 3000.0)]
+    pub initial_price: f64,
+    /// Price volatility per step
+    #[arg(long, default_value_t = 0.02)]
+    pub volatility: f64,
+}
+
+#[derive(Args)]
+pub struct ZkArgs {
+    #[command(subcommand)]
+    pub action: ZkSubcommand,
+}
+
+#[derive(Subcommand)]
+pub enum ZkSubcommand {
+    /// Compile zkVM guest program and generate zero-knowledge proof
+    Prove {
+        /// Path to zkVM project directory (default: current directory)
+        path: Option<PathBuf>,
+        /// Output proof metadata as JSON
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[derive(Args)]
@@ -423,6 +658,11 @@ pub enum NewKind {
     },
     /// Scaffold a Solidity contract project with Foundry and Solar
     Contract {
+        name: String,
+        out: Option<PathBuf>,
+    },
+    /// Scaffold a high-performance RISC-V zkVM project (SP1 compatible)
+    Zk {
         name: String,
         out: Option<PathBuf>,
     },
