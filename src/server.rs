@@ -58,6 +58,9 @@ pub async fn run_server(ws: Workspace, port: u16, open_browser: bool) -> Result<
         .route("/api/bytecode/inspect", post(api_bytecode_inspect))
         .route("/api/verify/prove", post(api_verify_prove))
         .route("/api/verify/fuzz", post(api_verify_fuzz))
+        .route("/api/storage/inspect", post(api_storage_inspect))
+        .route("/api/copilot/explain", post(api_copilot_explain))
+        .route("/api/bench/run", post(api_bench_run))
         .route("/api/repl/eval", post(api_repl_eval))
         .route("/api/mev/sim", post(api_mev_sim))
         .route("/api/analytics/query", post(api_analytics_query))
@@ -418,26 +421,73 @@ async fn api_workflow_scaffold(State(s): State<AppState>, Json(req): Json<Scaffo
 #[derive(Deserialize)]
 struct ForensicsQuery {
     address: Option<String>,
+    hops: Option<usize>,
 }
 
 async fn api_get_forensics_flow(State(_s): State<AppState>, Query(q): Query<ForensicsQuery>) -> Json<Value> {
     let subject = q.address.unwrap_or_else(|| "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045".into());
-    let nodes = json!([
-        { "id": subject, "label": "Subject Account", "type": "subject", "balance": "142.5 ETH", "risk": "Low", "hop": 0 },
-        { "id": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "label": "Uniswap V3 SwapRouter", "type": "contract", "balance": "5,410 ETH", "risk": "Clean", "hop": 1 },
-        { "id": "0xd90e2f925DA726b50C4Ed8D0Fb90Ad053324F31b", "label": "Tornado Cash Router", "type": "mixer", "balance": "12,890 ETH", "risk": "High", "hop": 2 },
-        { "id": "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff", "label": "Arbitrum One Bridge", "type": "bridge", "balance": "84,000 ETH", "risk": "Clean", "hop": 1 },
-        { "id": "0x1111111254fb6c44bac0bed2854e76f90643097d", "label": "1inch Aggregator", "type": "contract", "balance": "3,120 ETH", "risk": "Clean", "hop": 1 },
-        { "id": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE", "label": "Binance Hot Wallet", "type": "exchange", "balance": "420,000 ETH", "risk": "Clean", "hop": 2 }
-    ]);
-    let edges = json!([
-        { "source": subject, "target": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "value": "15.0 ETH", "token": "ETH", "tx": "0x4a11...bb22" },
-        { "source": "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45", "target": "0xd90e2f925DA726b50C4Ed8D0Fb90Ad053324F31b", "value": "10.0 ETH", "token": "WETH", "tx": "0x7c33...dd44" },
-        { "source": subject, "target": "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff", "value": "50.0 ETH", "token": "ETH", "tx": "0x1e55...ff66" },
-        { "source": subject, "target": "0x1111111254fb6c44bac0bed2854e76f90643097d", "value": "25.0 ETH", "token": "USDC", "tx": "0x9a77...8899" },
-        { "source": "0x1111111254fb6c44bac0bed2854e76f90643097d", "target": "0x3f5CE5FBFe3E9af3971dD833D26bA9b5C936f0bE", "value": "24.8 ETH", "token": "USDT", "tx": "0x2b88...cc00" }
-    ]);
-    Json(json!({ "subject": subject, "nodes": nodes, "edges": edges, "hops": 2, "entityCount": 6 }))
+    let hops = q.hops.unwrap_or(2);
+    match crate::forensics::trace_flow(&subject, hops) {
+        Ok(graph) => Json(serde_json::to_value(&graph).unwrap_or_default()),
+        Err(e) => Json(json!({ "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct StorageInspectRequest {
+    #[serde(default)]
+    contract_a: Option<String>,
+    #[serde(default)]
+    contract_b: Option<String>,
+    #[serde(default)]
+    source: Option<String>,
+}
+
+async fn api_storage_inspect(State(_s): State<AppState>, Json(req): Json<StorageInspectRequest>) -> Json<Value> {
+    let target = req.contract_a.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    if let Some(b) = req.contract_b {
+        match crate::storage::compare_layouts(std::path::Path::new(&target), std::path::Path::new(&b)) {
+            Ok(rep) => Json(json!({ "success": true, "report": rep })),
+            Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+        }
+    } else {
+        match crate::storage::inspect_storage(std::path::Path::new(&target)) {
+            Ok(layout) => Json(json!({ "success": true, "layout": layout })),
+            Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct CopilotRequest {
+    #[serde(default)]
+    target: Option<String>,
+    #[serde(default)]
+    source: Option<String>,
+}
+
+async fn api_copilot_explain(State(_s): State<AppState>, Json(req): Json<CopilotRequest>) -> Json<Value> {
+    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    match crate::copilot::analyze_contract(std::path::Path::new(&target)) {
+        Ok(rep) => Json(json!({ "success": true, "report": rep })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
+}
+
+#[derive(Deserialize)]
+struct BenchRequest {
+    #[serde(default)]
+    target: Option<String>,
+    #[serde(default)]
+    source: Option<String>,
+}
+
+async fn api_bench_run(State(_s): State<AppState>, Json(req): Json<BenchRequest>) -> Json<Value> {
+    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    match crate::bench::run_benchmark(std::path::Path::new(&target)) {
+        Ok(rep) => Json(json!({ "success": true, "report": rep })),
+        Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
+    }
 }
 
 #[derive(Deserialize)]

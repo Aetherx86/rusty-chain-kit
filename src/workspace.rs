@@ -129,17 +129,21 @@ pub struct Workspace {
 
 impl Workspace {
     /// Find the manifest: `$PARA_MANIFEST`, then walk up from cwd looking for `para.toml` or
-    /// `para/para.toml`, then fall back to the manifest this binary was compiled from.
+    /// `para/para.toml`, falling back to `foundry.toml` discovery or built-in defaults.
     pub fn discover() -> Result<Self> {
         if let Some(p) = std::env::var_os("PARA_MANIFEST") {
             return Self::load(Path::new(&p));
         }
         if let Ok(mut dir) = std::env::current_dir() {
             loop {
-                for cand in [dir.join("para.toml"), dir.join("rusty-chain-kit.toml"), dir.join("para").join("para.toml"), dir.join("rusty-chain-kit").join("para.toml")] {
+                for cand in [dir.join("para.toml"), dir.join("para").join("para.toml"), dir.join("rusty-chain-kit").join("para.toml")] {
                     if cand.is_file() {
                         return Self::load(&cand);
                     }
+                }
+                let foundry_cand = dir.join("foundry.toml");
+                if foundry_cand.is_file() {
+                    return Self::from_foundry_toml(&foundry_cand);
                 }
                 if !dir.pop() {
                     break;
@@ -150,7 +154,26 @@ impl Workspace {
         if built_in.is_file() {
             return Self::load(&built_in);
         }
-        bail!("could not find para.toml (set PARA_MANIFEST or run inside the workspace)")
+        bail!("could not find para.toml or foundry.toml (set PARA_MANIFEST or run inside the workspace)")
+    }
+
+    /// Automatically load a virtual workspace from an existing `foundry.toml` configuration.
+    pub fn from_foundry_toml(path: &Path) -> Result<Self> {
+        let manifest_path = path.canonicalize().with_context(|| format!("reading {}", path.display()))?;
+        let root = manifest_path.parent().unwrap().to_path_buf();
+        let state = root.join(".para");
+        for sub in ["bin", "logs", "run", "data"] {
+            std::fs::create_dir_all(state.join(sub)).ok();
+        }
+        let manifest = Manifest {
+            workspace: WorkspaceCfg {
+                root: ".".into(),
+                state_dir: ".para".into(),
+                build_jobs: None,
+            },
+            repos: vec![],
+        };
+        Ok(Self { manifest_path, root, state, manifest })
     }
 
     pub fn load(path: &Path) -> Result<Self> {

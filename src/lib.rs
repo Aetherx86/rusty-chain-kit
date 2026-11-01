@@ -6,10 +6,13 @@
 
 pub mod aa;
 pub mod analytics;
+pub mod bench;
 pub mod builder;
 pub mod bytecode;
 pub mod chain;
 pub mod cli;
+pub mod copilot;
+pub mod forensics;
 pub mod git;
 pub mod mev;
 pub mod repl;
@@ -18,6 +21,7 @@ pub mod scaffold;
 pub mod server;
 pub mod services;
 pub mod sim;
+pub mod storage;
 pub mod tools;
 pub mod trace;
 pub mod trustless;
@@ -91,6 +95,10 @@ pub async fn run() -> Result<()> {
         Commands::Mev(m) => handle_mev(&ws, m)?,
         Commands::Sim(s) => handle_sim(&ws, s)?,
         Commands::Zk(z) => handle_zk(&ws, z)?,
+        Commands::Flow(f) => handle_flow(&ws, f)?,
+        Commands::Storage(s) => handle_storage(&ws, s)?,
+        Commands::Copilot(c) => handle_copilot(&ws, c)?,
+        Commands::Bench(b) => handle_bench(&ws, b)?,
         Commands::Decompile(d) => handle_decompile(&ws, d).await?,
         Commands::Extract(e) => handle_extract(&ws, e)?,
         Commands::New(n) => handle_new(&ws, n)?,
@@ -617,6 +625,17 @@ pub fn handle_compile(ws: &Workspace, args: cli::CompileArgs) -> Result<()> {
 }
 
 pub fn handle_audit(ws: &Workspace, args: cli::AuditArgs) -> Result<()> {
+    if args.poc || args.explain {
+        return handle_copilot(
+            ws,
+            cli::CopilotArgs {
+                target: args.path,
+                out: None,
+                json: false,
+            },
+        );
+    }
+
     if args.fuzz {
         ui::header(format!("Running Stateful Invariant Fuzzer on {}", args.path.display()));
         let report = verify::fuzz_contract(&args.path, args.runs.unwrap_or(5000), None)?;
@@ -887,6 +906,212 @@ pub fn handle_zk(_ws: &Workspace, args: cli::ZkArgs) -> Result<()> {
             ui::kv("Public Values", rep.public_values_hex);
             ui::kv("Verification Status", if rep.is_valid { "VALID" } else { "INVALID" });
         }
+    }
+    Ok(())
+}
+
+pub fn handle_flow(_ws: &Workspace, args: cli::FlowArgs) -> Result<()> {
+    let graph = forensics::trace_flow(&args.address, args.hops)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&graph)?);
+        return Ok(());
+    }
+
+    ui::header(format!("Forensic Fund Flow & Risk Dossier for {}", args.address));
+    ui::kv("Overall Risk Level", format!("{}", graph.overall_risk_level));
+    ui::kv("Risk Score (0-100)", graph.overall_risk_score);
+    ui::kv("Graph Traversal Hops", graph.max_hops);
+    ui::kv("Total Entities Tracked", graph.total_entities);
+    ui::kv("Mixer Exposure", format!("{:.1}%", graph.dossier.direct_exposure_to_mixer_pct));
+
+    ui::header("Summary Findings & Sanctions Alerts");
+    for f in &graph.summary_findings {
+        println!("  - {f}");
+    }
+
+    ui::header("Multi-Hop Entity Flow Graph");
+    let mut t = ui::table(&["Hop", "Source", "Target", "Transfer Amount", "Token", "Target Classification", "Risk Rating"]);
+    for e in &graph.edges {
+        let node = graph.nodes.iter().find(|n| n.id == e.target);
+        let (label, cat, risk) = match node {
+            Some(n) => (n.label.as_str(), format!("{}", n.entity_type), format!("{}", n.risk)),
+            None => ("Unknown", "Unknown".into(), "Unknown".into()),
+        };
+        t.add_row(vec![
+            e.hop.to_string(),
+            format!("{:.10}...", e.source),
+            format!("{:.10}... ({label})", e.target),
+            format!("{:.2}", e.value_eth),
+            e.token.clone(),
+            cat,
+            risk,
+        ]);
+    }
+    println!("{t}");
+
+    if let Some(csv_path) = args.export_csv {
+        let mut csv = String::from("hop,source,target,value_eth,token,tx_hash\n");
+        for e in &graph.edges {
+            csv.push_str(&format!("{},{},{},{},{},{}\n", e.hop, e.source, e.target, e.value_eth, e.token, e.tx_hash));
+        }
+        std::fs::write(&csv_path, csv)?;
+        ui::ok(format!("Exported forensic graph edges to {}", csv_path.display()));
+    }
+
+    Ok(())
+}
+
+pub fn handle_storage(_ws: &Workspace, args: cli::StorageArgs) -> Result<()> {
+    if let Some(ref v2_path) = args.contract_b {
+        ui::header(format!(
+            "Differential Storage Layout & Proxy Upgrade Collision Inspector: {} vs {}",
+            args.contract_a.display(),
+            v2_path.display()
+        ));
+        let rep = storage::compare_layouts(&args.contract_a, v2_path)?;
+        if args.json {
+            println!("{}", serde_json::to_string_pretty(&rep)?);
+            return Ok(());
+        }
+
+        ui::kv("Upgrade Status", if rep.is_safe_to_upgrade { "SAFE TO UPGRADE (Append-Only Compatible)" } else { "CRITICAL COLLISION HAZARD" });
+        ui::kv("Detected Collisions", rep.collisions.len());
+        ui::kv("V1 Total Slots", rep.layout_v1.total_slots_used);
+        ui::kv("V2 Total Slots", rep.layout_v2.total_slots_used);
+
+        if !rep.collisions.is_empty() {
+            ui::fail("Storage Collisions Found:");
+            for c in &rep.collisions {
+                match c {
+                    storage::CollisionKind::SlotShift { slot, var_v1, var_v2, details } => {
+                        println!("  - [SLOT SHIFT] Slot {slot}: `{var_v1}` replaced by `{var_v2}` ({details})");
+                    }
+                    storage::CollisionKind::TypeMutation { slot, var, type_v1, type_v2 } => {
+                        println!("  - [TYPE MUTATION] Slot {slot} `{var}`: type changed from `{type_v1}` to `{type_v2}`");
+                    }
+                    storage::CollisionKind::VariableRemoved { slot, var_v1, details } => {
+                        println!("  - [VARIABLE REMOVED] Slot {slot}: `{var_v1}` removed ({details})");
+                    }
+                    storage::CollisionKind::ProxyReservedCollision { slot, standard, conflicting_var } => {
+                        println!("  - [PROXY COLLISION] Slot {slot} ({standard}): conflicts with variable `{conflicting_var}`");
+                    }
+                }
+            }
+        }
+
+        ui::header("Recommendations");
+        for r in &rep.recommendations {
+            println!("  - {r}");
+        }
+    } else {
+        ui::header(format!("Storage Slot Layout: {}", args.contract_a.display()));
+        let layout = storage::inspect_storage(&args.contract_a)?;
+        if args.json {
+            println!("{}", serde_json::to_string_pretty(&layout)?);
+            return Ok(());
+        }
+
+        ui::kv("Contract", layout.contract_name);
+        ui::kv("Total Slots Used", layout.total_slots_used);
+        ui::kv("Wasted Padding Bytes", layout.wasted_bytes_in_packed_slots);
+
+        let mut t = ui::table(&["Slot", "Offset (Bytes)", "Size", "Type", "Variable Name"]);
+        for item in &layout.slots {
+            t.add_row(vec![
+                item.slot.to_string(),
+                format!("{}/32", item.offset),
+                format!("{} B", item.size_bytes),
+                item.type_name.clone(),
+                item.var_name.clone(),
+            ]);
+        }
+        println!("{t}");
+    }
+    Ok(())
+}
+
+pub fn handle_copilot(_ws: &Workspace, args: cli::CopilotArgs) -> Result<()> {
+    ui::header(format!("Automated Vulnerability Diagnosis & PoC Synthesizer on {}", args.target.display()));
+    let rep = copilot::analyze_contract(&args.target)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&rep)?);
+        return Ok(());
+    }
+
+    ui::kv("Target Contract", rep.target_contract);
+    ui::kv("Total Vulnerabilities Identified", rep.total_findings);
+    ui::kv("Critical Severity", rep.critical_count);
+
+    for (idx, f) in rep.findings.iter().enumerate() {
+        ui::header(format!("Finding #{}: {} [{}]", idx + 1, f.title, f.severity));
+        ui::kv("Class", format!("{}", f.vulnerability_class));
+        println!("\n  Diagnosis:\n    {}", f.diagnosis);
+        println!("\n  Attack Vector Steps:");
+        for step in &f.attack_vector_steps {
+            println!("    -> {step}");
+        }
+        println!("\n  Recommended Remediation:\n    {}", f.remediation);
+        println!("\n  Synthesized Foundry PoC Exploit Test:\n");
+        for line in f.poc_test_code.lines() {
+            println!("    {line}");
+        }
+    }
+
+    if let Some(out_path) = args.out {
+        std::fs::write(&out_path, &rep.synthesized_poc_harness)?;
+        ui::ok(format!("Exported synthesized PoC test contract to {}", out_path.display()));
+    }
+    Ok(())
+}
+
+pub fn handle_bench(_ws: &Workspace, args: cli::BenchArgs) -> Result<()> {
+    ui::header(format!("Cross-Compiler Differential Benchmark on {}", args.target.display()));
+    let rep = bench::run_benchmark(&args.target)?;
+    if args.json {
+        println!("{}", serde_json::to_string_pretty(&rep)?);
+        return Ok(());
+    }
+
+    ui::kv("Contract", rep.contract_name);
+    ui::kv("Bytecode Size Reduction", format!("{:.1}% ({} bytes saved)", rep.bytecode_size_reduction_pct, -rep.bytecode_size_delta_bytes));
+    ui::kv("Average Runtime Gas Savings", format!("{:.2}% per call", rep.average_gas_savings_pct));
+    ui::kv("Compile Time Overhead", format!("{:+ } ms", rep.compile_time_overhead_ms));
+
+    ui::header("Pipeline Performance Comparison Matrix");
+    let mut t = ui::table(&["Metric", "Standard Pipeline", "Aggressive Optimizer (via-ir)", "Delta"]);
+    t.add_row(vec![
+        "Bytecode Size".into(),
+        format!("{} bytes", rep.baseline.bytecode_size_bytes),
+        format!("{} bytes", rep.optimized.bytecode_size_bytes),
+        format!("{} bytes ({:.1}%)", rep.bytecode_size_delta_bytes, -rep.bytecode_size_reduction_pct),
+    ]);
+    t.add_row(vec![
+        "Deployment Gas".into(),
+        rep.baseline.deployment_gas.to_string(),
+        rep.optimized.deployment_gas.to_string(),
+        format!("-{} gas", rep.baseline.deployment_gas - rep.optimized.deployment_gas),
+    ]);
+    t.add_row(vec![
+        "Compilation Time".into(),
+        format!("{} ms", rep.baseline.compile_duration_ms),
+        format!("{} ms", rep.optimized.compile_duration_ms),
+        format!("+{} ms", rep.compile_time_overhead_ms),
+    ]);
+    for (func, base_gas) in &rep.baseline.function_gas_costs {
+        if let Some(opt_gas) = rep.optimized.function_gas_costs.get(func) {
+            t.add_row(vec![
+                format!("Gas: {func}"),
+                base_gas.to_string(),
+                opt_gas.to_string(),
+                format!("-{} ({:.1}%)", base_gas - opt_gas, ((*base_gas - *opt_gas) as f64) / (*base_gas as f64) * 100.0),
+            ]);
+        }
+    }
+    println!("{t}");
+
+    ui::header("Analysis & Deployment Guidance");
+    for note in &rep.analysis_notes {
+        println!("  - {note}");
     }
     Ok(())
 }

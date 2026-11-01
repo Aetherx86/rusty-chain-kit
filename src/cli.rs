@@ -83,6 +83,18 @@ pub enum Commands {
     /// Zero-Knowledge Virtual Machine (zkVM) compilation and proof generation
     Zk(ZkArgs),
 
+    /// Multi-hop forensic fund flow graph and entity risk scoring
+    Flow(FlowArgs),
+
+    /// Inspect storage variable layout and detect proxy upgrade collisions
+    Storage(StorageArgs),
+
+    /// Automated vulnerability explainer and executable PoC exploit synthesizer
+    Copilot(CopilotArgs),
+
+    /// Cross-compiler differential benchmarking across optimizer runs and IR settings
+    Bench(BenchArgs),
+
     /// Decompile EVM bytecode to Solidity via Heimdall or disassemble via Cast
     Decompile(DecompileArgs),
 
@@ -444,6 +456,12 @@ pub struct AuditArgs {
     /// Formally prove contract invariants using symbolic execution (Z3 SMT solver)
     #[arg(long)]
     pub prove: bool,
+    /// Synthesize executable Foundry PoC exploit test harness
+    #[arg(long)]
+    pub poc: bool,
+    /// Generate plain-language vulnerability explanation
+    #[arg(long)]
+    pub explain: bool,
     /// Number of fuzzing iterations
     #[arg(long)]
     pub runs: Option<usize>,
@@ -612,6 +630,53 @@ pub enum ZkSubcommand {
         #[arg(long)]
         json: bool,
     },
+}
+
+#[derive(Args)]
+pub struct FlowArgs {
+    /// Subject address or transaction hash to trace
+    pub address: String,
+    /// Maximum graph traversal hops (1 to 4)
+    #[arg(long, default_value_t = 2)]
+    pub hops: usize,
+    /// Output forensic flow graph as JSON
+    #[arg(long)]
+    pub json: bool,
+    /// Export graph edges and nodes to CSV file
+    #[arg(long)]
+    pub export_csv: Option<PathBuf>,
+}
+
+#[derive(Args)]
+pub struct StorageArgs {
+    /// Target contract Solidity file or implementation V1
+    pub contract_a: PathBuf,
+    /// Optional implementation V2 to perform upgrade collision analysis
+    pub contract_b: Option<PathBuf>,
+    /// Output storage layout and collision report as JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct CopilotArgs {
+    /// Contract source file or bytecode to diagnose
+    pub target: PathBuf,
+    /// Output synthesized Foundry PoC exploit test contract to file
+    #[arg(long)]
+    pub out: Option<PathBuf>,
+    /// Output analysis as JSON
+    #[arg(long)]
+    pub json: bool,
+}
+
+#[derive(Args)]
+pub struct BenchArgs {
+    /// Contract file to benchmark across compiler configurations
+    pub target: PathBuf,
+    /// Output benchmark comparison matrix as JSON
+    #[arg(long)]
+    pub json: bool,
 }
 
 #[derive(Args)]

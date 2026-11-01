@@ -815,7 +815,7 @@ fn test_cli_chain_code_proxy_abi_cfg() {
 fn test_cli_audit_fuzz_prove() {
     let cli = Cli::try_parse_from(["para", "audit", "contracts/", "--fuzz", "--prove", "--runs", "10000"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Audit(rusty_chain_kit::cli::AuditArgs { path, fuzz, prove, runs }) => {
+        Commands::Audit(rusty_chain_kit::cli::AuditArgs { path, fuzz, prove, runs, .. }) => {
             assert_eq!(path.to_str().unwrap(), "contracts/");
             assert!(fuzz);
             assert!(prove);
