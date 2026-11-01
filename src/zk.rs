@@ -1,7 +1,7 @@
 //! Zero-Knowledge Virtual Machine (zkVM) Compilation & Proving Pipeline.
 //!
 //! Provides project scaffolding and proof generation workflows for
-//! high-performance RISC-V zkVM architectures (SP1 compatible).
+//! high-performance RISC-V zkVM architectures.
 
 use anyhow::{Result, bail};
 use serde::{Deserialize, Serialize};
@@ -105,7 +105,7 @@ pub fn prove_zk_project(project_dir: &Path) -> Result<ZkProofReport> {
 
     Ok(ZkProofReport {
         project_name: name,
-        proof_type: "SP1 Groth16 / PLONK".into(),
+        proof_type: "Groth16 / PLONK".into(),
         execution_cycles: 124_850,
         proof_size_bytes: 256,
         compile_duration_ms: 1200,

@@ -870,8 +870,8 @@ pub fn handle_sim(_ws: &Workspace, args: cli::SimArgs) -> Result<()> {
 
 pub fn handle_zk(_ws: &Workspace, args: cli::ZkArgs) -> Result<()> {
     match args.action {
-        cli::ZkSubcommand::Prove { path, json } => {
-            let target_dir = path.unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+        cli::ZkSubcommand::Prove { path, path_flag, json } => {
+            let target_dir = path.or(path_flag).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
             ui::header(format!("Compiling and Proving zkVM Program in {}", target_dir.display()));
             let rep = zk::prove_zk_project(&target_dir)?;
             if json {
@@ -927,7 +927,13 @@ pub fn handle_new(ws: &Workspace, args: cli::NewArgs) -> Result<()> {
         }
         cli::NewKind::Zk { name, out } => {
             let target = match out {
-                Some(p) => p,
+                Some(p) => {
+                    if p.is_dir() && !p.ends_with(&name) {
+                        p.join(&name)
+                    } else {
+                        p
+                    }
+                }
                 None => std::env::current_dir()?.join(&name),
             };
             zk::scaffold_zk_project(&target, &name)?;

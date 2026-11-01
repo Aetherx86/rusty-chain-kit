@@ -89,7 +89,7 @@ pub enum Commands {
     /// Extract blockchain datasets (blocks, txs, logs) via Cryo
     Extract(ExtractArgs),
 
-    /// Scaffold new projects (Artemis bot, Viem script, Foundry/Solar contract, SP1 zkVM)
+    /// Scaffold new projects (MEV bot, Viem script, smart contract, zkVM)
     New(NewArgs),
 
     /// Launch the embedded Web GUI Dashboard
@@ -605,6 +605,9 @@ pub enum ZkSubcommand {
     Prove {
         /// Path to zkVM project directory (default: current directory)
         path: Option<PathBuf>,
+        /// Explicit path flag to zkVM project directory
+        #[arg(long = "path")]
+        path_flag: Option<PathBuf>,
         /// Output proof metadata as JSON
         #[arg(long)]
         json: bool,
@@ -661,7 +664,7 @@ pub enum NewKind {
         name: String,
         out: Option<PathBuf>,
     },
-    /// Scaffold a high-performance RISC-V zkVM project (SP1 compatible)
+    /// Scaffold a high-performance RISC-V zkVM project
     Zk {
         name: String,
         out: Option<PathBuf>,

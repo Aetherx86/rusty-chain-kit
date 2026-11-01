@@ -731,6 +731,22 @@ fn test_cli_zk_prove() {
         }
         _ => panic!("Expected zk prove"),
     }
+
+    let cli_path = Cli::try_parse_from(["para", "zk", "prove", "--path", "my-prover"]).unwrap();
+    match cli_path.command.unwrap() {
+        Commands::Zk(ZkArgs { action: ZkSubcommand::Prove { path_flag, .. } }) => {
+            assert_eq!(path_flag, Some(std::path::PathBuf::from("my-prover")));
+        }
+        _ => panic!("Expected zk prove with --path"),
+    }
+
+    let cli_pos = Cli::try_parse_from(["para", "zk", "prove", "my-prover"]).unwrap();
+    match cli_pos.command.unwrap() {
+        Commands::Zk(ZkArgs { action: ZkSubcommand::Prove { path, .. } }) => {
+            assert_eq!(path, Some(std::path::PathBuf::from("my-prover")));
+        }
+        _ => panic!("Expected zk prove with positional path"),
+    }
 }
 
 #[test]
