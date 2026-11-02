@@ -1,5 +1,5 @@
 # Multi-stage build for Rusty Chain Kit
-FROM rust:1.85-bookworm AS builder
+FROM rust:bookworm AS builder
 
 WORKDIR /usr/src/rusty-chain-kit
 
