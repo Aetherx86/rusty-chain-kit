@@ -418,10 +418,10 @@ para node up --port 8645
 
 ## Testing & Quality Assurance
 
-Rusty Chain Kit includes an extensive integration test suite verifying every subsystem, CLI flag, proxy detector, and cryptographic proof across 201 integration tests:
+Rusty Chain Kit includes an extensive integration test suite verifying every subsystem, CLI flag, proxy detector, and cryptographic proof across 202 integration tests:
 
 ```bash
-# Execute all test suites (201 tests passing)
+# Execute all test suites (202 tests passing)
 cargo test
 
 # Execute specific test suites

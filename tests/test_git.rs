@@ -84,7 +84,70 @@ fn test_status_for_known_repo() {
     let st = status(&ws, foundry);
     assert_eq!(st.name, "foundry");
     assert_eq!(st.category, "toolkit");
-    assert!(!st.head.is_empty());
+    if st.exists {
+        assert!(!st.head.is_empty());
+    } else {
+        assert!(st.head.is_empty());
+    }
+}
+
+#[test]
+fn test_status_for_temporary_git_repo() {
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path();
+
+    let init_out = std::process::Command::new("git")
+        .arg("-C")
+        .arg(path)
+        .args(&["init", "-b", "main"])
+        .output();
+    if init_out.is_ok() {
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(path)
+            .args(&["config", "user.email", "ci@example.com"])
+            .output()
+            .ok();
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(path)
+            .args(&["config", "user.name", "CI Runner"])
+            .output()
+            .ok();
+        std::fs::write(path.join("README.md"), "test").unwrap();
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(path)
+            .args(&["add", "."])
+            .output()
+            .ok();
+        std::process::Command::new("git")
+            .arg("-C")
+            .arg(path)
+            .args(&["commit", "-m", "init"])
+            .output()
+            .ok();
+
+        let ws = Workspace::discover().unwrap();
+        let repo = Repo {
+            name: "temp-repo".into(),
+            path: path.to_string_lossy().to_string(),
+            upstream: "https://github.com/foo/bar.git".into(),
+            branch: "main".into(),
+            local_branch: Some("main".into()),
+            strategy: Strategy::Rebase,
+            remote: "upstream".into(),
+            fork: None,
+            push: false,
+            category: "toolkit".into(),
+            description: "temp".into(),
+            build: None,
+        };
+        let st = status(&ws, &repo);
+        assert!(st.exists);
+        assert!(!st.head.is_empty());
+        assert_eq!(st.current_branch, "main");
+    }
 }
 
 #[test]
