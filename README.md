@@ -6,6 +6,8 @@
 
 Rusty Chain Kit (v0.1.1 beta) is an all-in-one developer command center and unified Ethereum toolchain. It provides a high-performance Command Line Interface (`para` / `rusty-chain-kit`) and an interactive Web Graphical User Interface dashboard uniting smart contract compilation, formal invariant verification, stateful dynamic fuzzing, EVM bytecode decompilation, trustless light-client state root verification, zero-knowledge virtual machine (zkVM) proving, agent-based market dynamic simulation, high-performance MEV mempool execution, native Account Abstraction (EIP-7702 / ERC-4337), cycle-accurate gas flamegraphs, revert autopsies, vectorized blockchain SQL analytics, interactive multi-hop fund flow forensic visualization, storage layout and proxy upgrade collision inspection, automated vulnerability diagnosis with executable PoC synthesis, and cross-compiler differential benchmarking.
 
+For comprehensive technical guides, architecture deep dives, and the exhaustive command reference, visit the [Rusty Chain Kit Wiki](wiki/Home.md).
+
 ---
 
 ## Architecture Overview
