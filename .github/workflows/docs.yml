@@ -11,6 +11,9 @@ env:
   CARGO_TERM_COLOR: always
   RUSTDOCFLAGS: -D warnings
 
+permissions:
+  contents: read
+
 jobs:
   doc:
     name: Build Documentation
