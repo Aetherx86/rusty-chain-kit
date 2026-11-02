@@ -54,7 +54,7 @@ pub fn info(s: impl AsRef<str>) {
 
 pub fn table(headers: &[&str]) -> comfy_table::Table {
     let mut t = comfy_table::Table::new();
-    t.load_preset(comfy_table::presets::UTF8_HORIZONTAL_ONLY);
+    t.load_style(comfy_table::presets::UTF8_HORIZONTAL_ONLY);
     t.set_content_arrangement(comfy_table::ContentArrangement::Dynamic);
     t.set_header(headers.iter().map(|h| *h));
     t
