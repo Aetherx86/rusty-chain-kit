@@ -8,12 +8,14 @@ on:
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - '.cargo/audit.toml'
       - '.github/workflows/audit.yml'
   pull_request:
     branches: [ "main" ]
     paths:
       - 'Cargo.toml'
       - 'Cargo.lock'
+      - '.cargo/audit.toml'
   workflow_dispatch:
 
 jobs:
@@ -24,7 +26,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@cargo-audit
+
       - name: Run Cargo Audit
-        uses: rustsec/audit-check@v2.0.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+        run: cargo audit
