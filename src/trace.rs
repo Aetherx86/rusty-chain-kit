@@ -63,7 +63,11 @@ pub fn profile_opcodes(struct_logs: &[serde_json::Value]) -> (Vec<OpcodeProfile>
     let mut total_gas_all = 0u64;
 
     for log in struct_logs {
-        let op = log.get("op").and_then(|v| v.as_str()).unwrap_or("UNKNOWN").to_string();
+        let op = log
+            .get("op")
+            .and_then(|v| v.as_str())
+            .unwrap_or("UNKNOWN")
+            .to_string();
         let gas_cost = log.get("gasCost").and_then(|v| v.as_u64()).unwrap_or(0);
 
         *counts.entry(op.clone()).or_insert(0) += 1;
@@ -75,7 +79,11 @@ pub fn profile_opcodes(struct_logs: &[serde_json::Value]) -> (Vec<OpcodeProfile>
         .into_iter()
         .map(|(opcode, total_gas)| {
             let count = counts.get(&opcode).copied().unwrap_or(1);
-            let avg_gas = if count > 0 { total_gas as f64 / count as f64 } else { 0.0 };
+            let avg_gas = if count > 0 {
+                total_gas as f64 / count as f64
+            } else {
+                0.0
+            };
             let percentage = if total_gas_all > 0 {
                 (total_gas as f64 / total_gas_all as f64) * 100.0
             } else {
@@ -152,7 +160,8 @@ pub fn autopsy_revert(revert_hex: &str, gas_consumed: u64) -> RevertAutopsy {
 
     // Standard Error(string) selector: 0x08c379a0
     if bytes.len() >= 4 && bytes[..4] == [0x08, 0xc3, 0x79, 0xa0] {
-        let msg = decode_abi_string(&bytes[4..]).unwrap_or_else(|| "Could not decode reason string".into());
+        let msg = decode_abi_string(&bytes[4..])
+            .unwrap_or_else(|| "Could not decode reason string".into());
         return RevertAutopsy {
             reverted: true,
             error_type: "RequireString".into(),
@@ -246,7 +255,9 @@ pub fn autopsy_revert(revert_hex: &str, gas_consumed: u64) -> RevertAutopsy {
         failing_contract: None,
         failing_opcode: Some("REVERT".into()),
         gas_consumed,
-        remedy_hint: format!("Look up selector 0x{selector} in the contract ABI or 4byte directory to decode arguments."),
+        remedy_hint: format!(
+            "Look up selector 0x{selector} in the contract ABI or 4byte directory to decode arguments."
+        ),
     }
 }
 

@@ -19,16 +19,24 @@ pub async fn connect(url: &str) -> Result<Client> {
     Ok(p.erased())
 }
 
-async fn raw(p: &Client, method: &'static str, params: impl serde::Serialize + Send + Sync + Clone + std::fmt::Debug + std::marker::Unpin + 'static) -> Result<Value> {
-    Ok(p.raw_request::<_, Value>(method.into(), params).await.with_context(|| method.to_string())?)
+async fn raw(
+    p: &Client,
+    method: &'static str,
+    params: impl serde::Serialize + Send + Sync + Clone + std::fmt::Debug + std::marker::Unpin + 'static,
+) -> Result<Value> {
+    Ok(p.raw_request::<_, Value>(method.into(), params)
+        .await
+        .with_context(|| method.to_string())?)
 }
 
 pub fn hex_u64(v: &Value) -> Option<u64> {
-    v.as_str().and_then(|s| u64::from_str_radix(s.trim_start_matches("0x"), 16).ok())
+    v.as_str()
+        .and_then(|s| u64::from_str_radix(s.trim_start_matches("0x"), 16).ok())
 }
 
 pub fn hex_u256(v: &Value) -> Option<U256> {
-    v.as_str().and_then(|s| U256::from_str_radix(s.trim_start_matches("0x"), 16).ok())
+    v.as_str()
+        .and_then(|s| U256::from_str_radix(s.trim_start_matches("0x"), 16).ok())
 }
 
 fn gwei(wei: u128) -> String {
@@ -86,7 +94,10 @@ pub async fn info(url: &str) -> Result<ChainInfo> {
         raw(&p, "eth_syncing", ()),
         raw(&p, "eth_getBlockByNumber", ("latest", false)),
     );
-    let base_fee = latest.ok().and_then(|b| hex_u256(&b["baseFeePerGas"])).map(|w| gwei(w.to::<u128>()));
+    let base_fee = latest
+        .ok()
+        .and_then(|b| hex_u256(&b["baseFeePerGas"]))
+        .map(|w| gwei(w.to::<u128>()));
     Ok(ChainInfo {
         url: url.to_string(),
         chain_id,
@@ -124,7 +135,11 @@ pub async fn block(url: &str, id: &str) -> Result<(BlockSummary, Value)> {
     } else {
         let tag = match id {
             "" | "latest" | "pending" | "safe" | "finalized" | "earliest" => {
-                if id.is_empty() { "latest".to_string() } else { id.to_string() }
+                if id.is_empty() {
+                    "latest".to_string()
+                } else {
+                    id.to_string()
+                }
             }
             n => {
                 let n: u64 = n.parse().with_context(|| format!("bad block id `{n}`"))?;
@@ -137,13 +152,21 @@ pub async fn block(url: &str, id: &str) -> Result<(BlockSummary, Value)> {
         bail!("block {id} not found");
     }
     let ts = hex_u64(&v["timestamp"]).unwrap_or(0);
-    let txs: Vec<String> =
-        v["transactions"].as_array().map(|a| a.iter().filter_map(|t| t.as_str().map(String::from)).collect()).unwrap_or_default();
+    let txs: Vec<String> = v["transactions"]
+        .as_array()
+        .map(|a| {
+            a.iter()
+                .filter_map(|t| t.as_str().map(String::from))
+                .collect()
+        })
+        .unwrap_or_default();
     let s = BlockSummary {
         number: hex_u64(&v["number"]).unwrap_or(0),
         hash: v["hash"].as_str().unwrap_or_default().to_string(),
         timestamp: ts,
-        time: chrono::DateTime::from_timestamp(ts as i64, 0).map(|d| d.to_rfc3339()).unwrap_or_default(),
+        time: chrono::DateTime::from_timestamp(ts as i64, 0)
+            .map(|d| d.to_rfc3339())
+            .unwrap_or_default(),
         tx_count: txs.len(),
         gas_used: hex_u64(&v["gasUsed"]).unwrap_or(0),
         gas_limit: hex_u64(&v["gasLimit"]).unwrap_or(0),
@@ -233,9 +256,16 @@ pub struct AddressInfo {
 }
 
 pub async fn address(url: &str, addr: &str) -> Result<AddressInfo> {
-    let a: Address = addr.trim().parse().with_context(|| format!("bad address `{addr}`"))?;
+    let a: Address = addr
+        .trim()
+        .parse()
+        .with_context(|| format!("bad address `{addr}`"))?;
     let p = connect(url).await?;
-    let (bal, nonce, code) = tokio::join!(p.get_balance(a), p.get_transaction_count(a), p.get_code_at(a));
+    let (bal, nonce, code) = tokio::join!(
+        p.get_balance(a),
+        p.get_transaction_count(a),
+        p.get_code_at(a)
+    );
     let bal = bal?;
     let code = code?;
     Ok(AddressInfo {
@@ -250,7 +280,10 @@ pub async fn address(url: &str, addr: &str) -> Result<AddressInfo> {
 }
 
 pub async fn code(url: &str, addr: &str) -> Result<String> {
-    let a: Address = addr.trim().parse().with_context(|| format!("bad address `{addr}`"))?;
+    let a: Address = addr
+        .trim()
+        .parse()
+        .with_context(|| format!("bad address `{addr}`"))?;
     let p = connect(url).await?;
     Ok(p.get_code_at(a).await?.to_string())
 }
@@ -261,7 +294,9 @@ pub async fn watch_blocks(url: &str, mut f: impl FnMut(BlockSummary)) -> Result<
     let mut last = p.get_block_number().await?;
     loop {
         tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
-        let Ok(head) = p.get_block_number().await else { continue };
+        let Ok(head) = p.get_block_number().await else {
+            continue;
+        };
         while last < head {
             last += 1;
             if let Ok((b, _)) = block(url, &last.to_string()).await {

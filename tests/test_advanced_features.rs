@@ -8,10 +8,14 @@
 
 use clap::Parser;
 use rusty_chain_kit::bench::run_benchmark;
-use rusty_chain_kit::cli::{Cli, Commands, FlowArgs, StorageArgs, CopilotArgs, BenchArgs, AuditArgs};
-use rusty_chain_kit::copilot::{analyze_contract, VulnerabilityClass};
-use rusty_chain_kit::forensics::{lookup_known_entity, trace_flow, EntityCategory, RiskLevel};
-use rusty_chain_kit::storage::{compare_layouts, get_type_byte_size, parse_storage_layout_from_source, CollisionKind};
+use rusty_chain_kit::cli::{
+    AuditArgs, BenchArgs, Cli, Commands, CopilotArgs, FlowArgs, StorageArgs,
+};
+use rusty_chain_kit::copilot::{VulnerabilityClass, analyze_contract};
+use rusty_chain_kit::forensics::{EntityCategory, RiskLevel, lookup_known_entity, trace_flow};
+use rusty_chain_kit::storage::{
+    CollisionKind, compare_layouts, get_type_byte_size, parse_storage_layout_from_source,
+};
 use rusty_chain_kit::workspace::Workspace;
 use std::path::Path;
 
@@ -44,7 +48,12 @@ fn test_forensics_flow_sanctioned_mixer_detection() {
     assert_eq!(graph.overall_risk_score, 100);
     assert_eq!(graph.overall_risk_level, RiskLevel::Severe);
     assert!(graph.dossier.is_sanctioned);
-    assert!(graph.dossier.flags.contains(&"SANCTIONED_ENTITY".to_string()));
+    assert!(
+        graph
+            .dossier
+            .flags
+            .contains(&"SANCTIONED_ENTITY".to_string())
+    );
 }
 
 #[test]
@@ -59,7 +68,8 @@ fn test_forensics_flow_hops_clamping() {
 #[test]
 fn test_forensics_known_entities_mapping() {
     // Uniswap V3
-    let (cat_dex, _, risk_dex, sanc_dex) = lookup_known_entity("0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
+    let (cat_dex, _, risk_dex, sanc_dex) =
+        lookup_known_entity("0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45");
     assert_eq!(cat_dex, EntityCategory::Dex);
     assert_eq!(risk_dex, RiskLevel::Clean);
     assert!(!sanc_dex);
@@ -194,7 +204,10 @@ contract TokenV2 {
     assert!(!rep.is_safe_to_upgrade);
     assert!(!rep.collisions.is_empty());
 
-    let has_slot_shift = rep.collisions.iter().any(|c| matches!(c, CollisionKind::SlotShift { .. }));
+    let has_slot_shift = rep
+        .collisions
+        .iter()
+        .any(|c| matches!(c, CollisionKind::SlotShift { .. }));
     assert!(has_slot_shift);
 }
 
@@ -219,7 +232,10 @@ contract PoolV2 {
     let rep = compare_layouts(&p1, &p2).unwrap();
     assert!(!rep.is_safe_to_upgrade);
 
-    let has_type_mutation = rep.collisions.iter().any(|c| matches!(c, CollisionKind::TypeMutation { .. }));
+    let has_type_mutation = rep
+        .collisions
+        .iter()
+        .any(|c| matches!(c, CollisionKind::TypeMutation { .. }));
     assert!(has_type_mutation);
 }
 
@@ -245,7 +261,10 @@ contract VulnerableBank {
     assert!(rep.total_findings >= 1);
     assert!(rep.critical_count >= 1);
 
-    let reentrancy_finding = rep.findings.iter().find(|f| f.vulnerability_class == VulnerabilityClass::Reentrancy);
+    let reentrancy_finding = rep
+        .findings
+        .iter()
+        .find(|f| f.vulnerability_class == VulnerabilityClass::Reentrancy);
     assert!(reentrancy_finding.is_some());
 
     let f = reentrancy_finding.unwrap();
@@ -265,7 +284,10 @@ contract LendingProtocol {
 }
 "#;
     let rep = analyze_contract(Path::new(code)).unwrap();
-    let oracle_finding = rep.findings.iter().find(|f| f.vulnerability_class == VulnerabilityClass::OraclePriceManipulation);
+    let oracle_finding = rep
+        .findings
+        .iter()
+        .find(|f| f.vulnerability_class == VulnerabilityClass::OraclePriceManipulation);
     assert!(oracle_finding.is_some());
 }
 
@@ -278,7 +300,10 @@ contract SafeVault {
 "#;
     let rep = analyze_contract(Path::new(code)).unwrap();
     assert_eq!(rep.total_findings, 1);
-    assert_eq!(rep.findings[0].vulnerability_class, VulnerabilityClass::MissingAccessControl);
+    assert_eq!(
+        rep.findings[0].vulnerability_class,
+        VulnerabilityClass::MissingAccessControl
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -310,7 +335,11 @@ contract OptimizedSwap {
 fn test_workspace_foundry_toml_fallback_discovery() {
     let tmp = tempfile::tempdir().unwrap();
     let foundry_toml = tmp.path().join("foundry.toml");
-    std::fs::write(&foundry_toml, "[profile.default]\nsrc = 'src'\nout = 'out'\n").unwrap();
+    std::fs::write(
+        &foundry_toml,
+        "[profile.default]\nsrc = 'src'\nout = 'out'\n",
+    )
+    .unwrap();
 
     let ws = Workspace::from_foundry_toml(&foundry_toml).unwrap();
     assert_eq!(ws.manifest_path, foundry_toml.canonicalize().unwrap());
@@ -325,11 +354,22 @@ fn test_workspace_foundry_toml_fallback_discovery() {
 #[test]
 fn test_cli_flow_parser() {
     let cli = Cli::try_parse_from([
-        "para", "flow", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "--hops", "3", "--json"
-    ]).unwrap();
+        "para",
+        "flow",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--hops",
+        "3",
+        "--json",
+    ])
+    .unwrap();
 
     match cli.command.unwrap() {
-        Commands::Flow(FlowArgs { address, hops, json, export_csv }) => {
+        Commands::Flow(FlowArgs {
+            address,
+            hops,
+            json,
+            export_csv,
+        }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
             assert_eq!(hops, 3);
             assert!(json);
@@ -341,9 +381,14 @@ fn test_cli_flow_parser() {
 
 #[test]
 fn test_cli_storage_inspect_and_compare() {
-    let cli_inspect = Cli::try_parse_from(["para", "storage", "contracts/Vault.sol", "--json"]).unwrap();
+    let cli_inspect =
+        Cli::try_parse_from(["para", "storage", "contracts/Vault.sol", "--json"]).unwrap();
     match cli_inspect.command.unwrap() {
-        Commands::Storage(StorageArgs { contract_a, contract_b, json }) => {
+        Commands::Storage(StorageArgs {
+            contract_a,
+            contract_b,
+            json,
+        }) => {
             assert_eq!(contract_a.to_str().unwrap(), "contracts/Vault.sol");
             assert!(contract_b.is_none());
             assert!(json);
@@ -353,7 +398,11 @@ fn test_cli_storage_inspect_and_compare() {
 
     let cli_diff = Cli::try_parse_from(["para", "storage", "VaultV1.sol", "VaultV2.sol"]).unwrap();
     match cli_diff.command.unwrap() {
-        Commands::Storage(StorageArgs { contract_a, contract_b, .. }) => {
+        Commands::Storage(StorageArgs {
+            contract_a,
+            contract_b,
+            ..
+        }) => {
             assert_eq!(contract_a.to_str().unwrap(), "VaultV1.sol");
             assert_eq!(contract_b.unwrap().to_str().unwrap(), "VaultV2.sol");
         }
@@ -363,7 +412,15 @@ fn test_cli_storage_inspect_and_compare() {
 
 #[test]
 fn test_cli_copilot_parser() {
-    let cli = Cli::try_parse_from(["para", "copilot", "contracts/Vault.sol", "--out", "exploit.sol", "--json"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "copilot",
+        "contracts/Vault.sol",
+        "--out",
+        "exploit.sol",
+        "--json",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
         Commands::Copilot(CopilotArgs { target, out, json }) => {
             assert_eq!(target.to_str().unwrap(), "contracts/Vault.sol");
@@ -390,7 +447,9 @@ fn test_cli_bench_parser() {
 fn test_cli_audit_with_poc_and_explain_flags() {
     let cli = Cli::try_parse_from(["para", "audit", "contracts/", "--poc", "--explain"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Audit(AuditArgs { path, poc, explain, .. }) => {
+        Commands::Audit(AuditArgs {
+            path, poc, explain, ..
+        }) => {
             assert_eq!(path.to_str().unwrap(), "contracts/");
             assert!(poc);
             assert!(explain);
@@ -416,7 +475,10 @@ fn test_real_world_amm_constant_product_invariant() {
     let new_y = reserve_y - dy;
     let new_k = new_x * new_y;
 
-    assert!((new_k - k).abs() < 1e-4, "Constant product invariant violated!");
+    assert!(
+        (new_k - k).abs() < 1e-4,
+        "Constant product invariant violated!"
+    );
     assert!(new_y < reserve_y);
 }
 
@@ -431,7 +493,10 @@ fn test_real_world_lending_health_factor_and_liquidation() {
     let health_factor = (collateral_usd * liquidation_threshold) / borrowed_usd;
 
     // 10 * 3000 * 0.8 / 25000 = 24000 / 25000 = 0.96 (< 1.0 -> Liquidatable!)
-    assert!(health_factor < 1.0, "Position should be eligible for liquidation");
+    assert!(
+        health_factor < 1.0,
+        "Position should be eligible for liquidation"
+    );
 
     // Liquidation bonus of 5%
     let bonus = 1.05f64;

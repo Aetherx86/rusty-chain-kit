@@ -1,4 +1,4 @@
-use rusty_chain_kit::rpc::{add, list, lookup, remove, resolve, set_default, Endpoint, Resolved};
+use rusty_chain_kit::rpc::{Endpoint, Resolved, add, list, lookup, remove, resolve, set_default};
 use rusty_chain_kit::workspace::Workspace;
 
 #[test]
@@ -12,7 +12,11 @@ fn test_rpc_list_not_empty() {
 fn test_rpc_list_contains_builtin_sources() {
     let ws = Workspace::discover().unwrap();
     let endpoints = list(&ws);
-    assert!(endpoints.iter().any(|e| e.source == "builtin" || e.source == "para" || e.source == "mesc"));
+    assert!(
+        endpoints
+            .iter()
+            .any(|e| e.source == "builtin" || e.source == "para" || e.source == "mesc")
+    );
 }
 
 #[test]

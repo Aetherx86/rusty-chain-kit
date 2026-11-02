@@ -107,62 +107,118 @@ pub fn lookup_known_entity(addr: &str) -> (EntityCategory, &'static str, RiskLev
     let lower = addr.to_lowercase();
     match lower.as_str() {
         // Tornado Cash & Privacy Pools
-        "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b" => {
-            (EntityCategory::Mixer, "Tornado Cash Router", RiskLevel::Severe, true)
-        }
-        "0x12d66f87a04a9e220743712ce6d9bb1b5616b8fc" => {
-            (EntityCategory::Mixer, "Tornado.Cash 0.1 ETH", RiskLevel::Severe, true)
-        }
-        "0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936" => {
-            (EntityCategory::Mixer, "Tornado.Cash 1 ETH", RiskLevel::Severe, true)
-        }
-        "0x910cbd523d972eb0a6f4cae4618ad62622b39dbf" => {
-            (EntityCategory::Mixer, "Tornado.Cash 10 ETH", RiskLevel::Severe, true)
-        }
-        "0xa160cdab225685da1d56aa342ad8841c3b53f291" => {
-            (EntityCategory::Mixer, "Tornado.Cash 100 ETH", RiskLevel::Severe, true)
-        }
+        "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b" => (
+            EntityCategory::Mixer,
+            "Tornado Cash Router",
+            RiskLevel::Severe,
+            true,
+        ),
+        "0x12d66f87a04a9e220743712ce6d9bb1b5616b8fc" => (
+            EntityCategory::Mixer,
+            "Tornado.Cash 0.1 ETH",
+            RiskLevel::Severe,
+            true,
+        ),
+        "0x47ce0c6ed5b0ce3d3a51fdb1c52dc66a7c3c2936" => (
+            EntityCategory::Mixer,
+            "Tornado.Cash 1 ETH",
+            RiskLevel::Severe,
+            true,
+        ),
+        "0x910cbd523d972eb0a6f4cae4618ad62622b39dbf" => (
+            EntityCategory::Mixer,
+            "Tornado.Cash 10 ETH",
+            RiskLevel::Severe,
+            true,
+        ),
+        "0xa160cdab225685da1d56aa342ad8841c3b53f291" => (
+            EntityCategory::Mixer,
+            "Tornado.Cash 100 ETH",
+            RiskLevel::Severe,
+            true,
+        ),
         // DEX Protocols
-        "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45" => {
-            (EntityCategory::Dex, "Uniswap V3 SwapRouter", RiskLevel::Clean, false)
-        }
-        "0x7a250d5630b4cf539739df2c5dacb4c659f2488d" => {
-            (EntityCategory::Dex, "Uniswap V2 Router", RiskLevel::Clean, false)
-        }
-        "0x1111111254fb6c44bac0bed2854e76f90643097d" => {
-            (EntityCategory::Dex, "1inch Aggregator V5", RiskLevel::Clean, false)
-        }
-        "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f" => {
-            (EntityCategory::Dex, "SushiSwap Router", RiskLevel::Clean, false)
-        }
-        "0xba12222222228d8ba445958a75a0704d566bf2c8" => {
-            (EntityCategory::Dex, "Balancer V2 Vault", RiskLevel::Clean, false)
-        }
+        "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45" => (
+            EntityCategory::Dex,
+            "Uniswap V3 SwapRouter",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0x7a250d5630b4cf539739df2c5dacb4c659f2488d" => (
+            EntityCategory::Dex,
+            "Uniswap V2 Router",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0x1111111254fb6c44bac0bed2854e76f90643097d" => (
+            EntityCategory::Dex,
+            "1inch Aggregator V5",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0xd9e1ce17f2641f24ae83637ab66a2cca9c378b9f" => (
+            EntityCategory::Dex,
+            "SushiSwap Router",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0xba12222222228d8ba445958a75a0704d566bf2c8" => (
+            EntityCategory::Dex,
+            "Balancer V2 Vault",
+            RiskLevel::Clean,
+            false,
+        ),
         // Bridges
-        "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff" => {
-            (EntityCategory::Bridge, "Arbitrum One Inbox Bridge", RiskLevel::Clean, false)
-        }
-        "0x99c9fc46f92e8a1c0dec1b1747d010903e559bcc" => {
-            (EntityCategory::Bridge, "Optimism Portal Gateway", RiskLevel::Clean, false)
-        }
-        "0xa0c68c638235ee32657e8f720a23cec1bfc77c77" => {
-            (EntityCategory::Bridge, "Polygon PoS Bridge", RiskLevel::Clean, false)
-        }
+        "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff" => (
+            EntityCategory::Bridge,
+            "Arbitrum One Inbox Bridge",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0x99c9fc46f92e8a1c0dec1b1747d010903e559bcc" => (
+            EntityCategory::Bridge,
+            "Optimism Portal Gateway",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0xa0c68c638235ee32657e8f720a23cec1bfc77c77" => (
+            EntityCategory::Bridge,
+            "Polygon PoS Bridge",
+            RiskLevel::Clean,
+            false,
+        ),
         // Centralized Exchanges
-        "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be" => {
-            (EntityCategory::Exchange, "Binance Hot Wallet 6", RiskLevel::Clean, false)
-        }
-        "0x28c6c06298d514db089934071355e5743bf21d60" => {
-            (EntityCategory::Exchange, "Binance Hot Wallet 14", RiskLevel::Clean, false)
-        }
-        "0x503828976d22510aad0201ac7ec88293211d23da" => {
-            (EntityCategory::Exchange, "Coinbase Prime Custody", RiskLevel::Clean, false)
-        }
+        "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be" => (
+            EntityCategory::Exchange,
+            "Binance Hot Wallet 6",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0x28c6c06298d514db089934071355e5743bf21d60" => (
+            EntityCategory::Exchange,
+            "Binance Hot Wallet 14",
+            RiskLevel::Clean,
+            false,
+        ),
+        "0x503828976d22510aad0201ac7ec88293211d23da" => (
+            EntityCategory::Exchange,
+            "Coinbase Prime Custody",
+            RiskLevel::Clean,
+            false,
+        ),
         // Lending
-        "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2" => {
-            (EntityCategory::Lending, "Aave V3 Pool", RiskLevel::Clean, false)
-        }
-        _ => (EntityCategory::Unknown, "Unknown Entity", RiskLevel::Low, false),
+        "0x87870bca3f3fd6335c3f4ce8392d69350b4fa4e2" => (
+            EntityCategory::Lending,
+            "Aave V3 Pool",
+            RiskLevel::Clean,
+            false,
+        ),
+        _ => (
+            EntityCategory::Unknown,
+            "Unknown Entity",
+            RiskLevel::Low,
+            false,
+        ),
     }
 }
 
@@ -180,7 +236,11 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
     let (subj_cat, subj_label, subj_risk, is_sanctioned) = lookup_known_entity(&clean_addr);
     nodes.push(ForensicNode {
         id: clean_addr.clone(),
-        label: if subj_label == "Unknown Entity" { "Subject Target".into() } else { subj_label.into() },
+        label: if subj_label == "Unknown Entity" {
+            "Subject Target".into()
+        } else {
+            subj_label.into()
+        },
         entity_type: EntityCategory::Subject,
         balance: "142.50 ETH".into(),
         risk: subj_risk,
@@ -190,9 +250,24 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
 
     // 2. Hop 1 Outflows
     let hop1_targets = [
-        ("0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", 15.0, "ETH", "0x4a11c00184fa93bc7102eef5a08992147b85f67a213904a8b0df438c4106e64b"),
-        ("0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff", 50.0, "ETH", "0x1e550992a71f021e84a9c681284b238a0988cc6102aa6412b50c4ed8d0fb90ad"),
-        ("0x1111111254fb6c44bac0bed2854e76f90643097d", 25.0, "USDC", "0x9a77038bbcefa0148b8120eef98284758b29f06a0901e82847b56d9517b9c948"),
+        (
+            "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+            15.0,
+            "ETH",
+            "0x4a11c00184fa93bc7102eef5a08992147b85f67a213904a8b0df438c4106e64b",
+        ),
+        (
+            "0x4dbd4fc535bd2916850c95d2c0b02bc450ff48ff",
+            50.0,
+            "ETH",
+            "0x1e550992a71f021e84a9c681284b238a0988cc6102aa6412b50c4ed8d0fb90ad",
+        ),
+        (
+            "0x1111111254fb6c44bac0bed2854e76f90643097d",
+            25.0,
+            "USDC",
+            "0x9a77038bbcefa0148b8120eef98284758b29f06a0901e82847b56d9517b9c948",
+        ),
     ];
 
     let mut total_vol_out = 0.0;
@@ -224,8 +299,20 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
     let mut direct_mixer_exposure = 0.0;
     if hops >= 2 {
         let hop2_flows = [
-            ("0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45", "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b", 10.0, "WETH", "0x7c3309e1a8bb2084c8a90104eec78491823a41b528bb2049e7826b50c4ed8d0f"),
-            ("0x1111111254fb6c44bac0bed2854e76f90643097d", "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be", 24.8, "USDT", "0x2b88019ab921c560b4a920eef19208a0988cc6102aa6412b50c4ed8d0fb90ad1"),
+            (
+                "0x68b3465833fb72a70ecdf485e0e4c7bd8665fc45",
+                "0xd90e2f925da726b50c4ed8d0fb90ad053324f31b",
+                10.0,
+                "WETH",
+                "0x7c3309e1a8bb2084c8a90104eec78491823a41b528bb2049e7826b50c4ed8d0f",
+            ),
+            (
+                "0x1111111254fb6c44bac0bed2854e76f90643097d",
+                "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+                24.8,
+                "USDT",
+                "0x2b88019ab921c560b4a920eef19208a0988cc6102aa6412b50c4ed8d0fb90ad1",
+            ),
         ];
 
         for (src, dst, val, token, tx) in hop2_flows {
@@ -275,10 +362,16 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
         (12, RiskLevel::Low)
     };
 
-    findings.push(format!("Total tracked outflow: {total_vol_out:.2} ETH across {hops} graph hops"));
-    findings.push(format!("Mixer exposure ratio: {mixer_pct:.1}% of funds routed towards obfuscation pools"));
+    findings.push(format!(
+        "Total tracked outflow: {total_vol_out:.2} ETH across {hops} graph hops"
+    ));
+    findings.push(format!(
+        "Mixer exposure ratio: {mixer_pct:.1}% of funds routed towards obfuscation pools"
+    ));
     if is_sanctioned {
-        findings.push("CRITICAL SANCTION ALERT: Target address is linked to OFAC/sanctioned entities!".into());
+        findings.push(
+            "CRITICAL SANCTION ALERT: Target address is linked to OFAC/sanctioned entities!".into(),
+        );
         flags.push("SANCTIONED_ENTITY".into());
     }
 

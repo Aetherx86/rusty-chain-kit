@@ -80,7 +80,11 @@ pub fn get_type_byte_size(type_str: &str) -> usize {
     }
     if t.starts_with("uint") || t.starts_with("int") {
         let bit_str = t.trim_start_matches("uint").trim_start_matches("int");
-        let bits = if bit_str.is_empty() { 256 } else { bit_str.parse::<usize>().unwrap_or(256) };
+        let bits = if bit_str.is_empty() {
+            256
+        } else {
+            bit_str.parse::<usize>().unwrap_or(256)
+        };
         return (bits + 7) / 8;
     }
     // Default struct, mapping, array or uint256 word
@@ -88,7 +92,10 @@ pub fn get_type_byte_size(type_str: &str) -> usize {
 }
 
 /// Parses state variables and packs them into EVM 32-byte storage slots.
-pub fn parse_storage_layout_from_source(source: &str, contract_hint: Option<&str>) -> StorageLayout {
+pub fn parse_storage_layout_from_source(
+    source: &str,
+    contract_hint: Option<&str>,
+) -> StorageLayout {
     let mut contract_name = contract_hint.unwrap_or("Contract").to_string();
     let mut items = Vec::new();
 
@@ -137,7 +144,10 @@ pub fn parse_storage_layout_from_source(source: &str, contract_hint: Option<&str
 
         let (type_name, var_name, size) = if decl.starts_with("mapping") {
             let after_mapping = decl.splitn(2, ')').nth(1).unwrap_or("");
-            let var = after_mapping.split_whitespace().last().unwrap_or("mapping_var");
+            let var = after_mapping
+                .split_whitespace()
+                .last()
+                .unwrap_or("mapping_var");
             ("mapping".to_string(), var.to_string(), 32)
         } else {
             let tokens: Vec<&str> = decl.split_whitespace().collect();
@@ -188,7 +198,11 @@ pub fn parse_storage_layout_from_source(source: &str, contract_hint: Option<&str
         }
     }
 
-    let total_slots = if current_offset > 0 { current_slot + 1 } else { current_slot };
+    let total_slots = if current_offset > 0 {
+        current_slot + 1
+    } else {
+        current_slot
+    };
 
     StorageLayout {
         contract_name,
@@ -224,7 +238,11 @@ pub fn compare_layouts(v1_path: &Path, v2_path: &Path) -> Result<StorageUpgradeR
     // Check V1 variables against V2
     for item_v1 in &layout_v1.slots {
         // Find matching slot in V2
-        if let Some(item_v2) = layout_v2.slots.iter().find(|i| i.slot == item_v1.slot && i.offset == item_v1.offset) {
+        if let Some(item_v2) = layout_v2
+            .slots
+            .iter()
+            .find(|i| i.slot == item_v1.slot && i.offset == item_v1.offset)
+        {
             // Check variable name shift
             if item_v1.var_name != item_v2.var_name {
                 collisions.push(CollisionKind::SlotShift {
@@ -262,11 +280,20 @@ pub fn compare_layouts(v1_path: &Path, v2_path: &Path) -> Result<StorageUpgradeR
     let is_safe = collisions.is_empty();
 
     if is_safe {
-        recommendations.push("Storage layout is append-only compatible. Safe to execute proxy upgrade.".into());
+        recommendations.push(
+            "Storage layout is append-only compatible. Safe to execute proxy upgrade.".into(),
+        );
     } else {
-        recommendations.push("DO NOT UPGRADE: Storage slot shifts or mutations will corrupt existing state!".into());
-        recommendations.push("Append all new state variables strictly to the end of the contract definition.".into());
-        recommendations.push("Retain deprecated state variables with `uint256 private __gap;` or reserved words.".into());
+        recommendations.push(
+            "DO NOT UPGRADE: Storage slot shifts or mutations will corrupt existing state!".into(),
+        );
+        recommendations.push(
+            "Append all new state variables strictly to the end of the contract definition.".into(),
+        );
+        recommendations.push(
+            "Retain deprecated state variables with `uint256 private __gap;` or reserved words."
+                .into(),
+        );
     }
 
     if layout_v2.wasted_bytes_in_packed_slots > 0 {

@@ -29,13 +29,17 @@ pub fn verify_account_proof(
     expected_state_root: Option<&str>,
 ) -> Result<TrustlessProofReport> {
     let mut notes = vec![];
-    notes.push(format!("initiating trustless Merkle proof verification for {address} on block {block_number}"));
+    notes.push(format!(
+        "initiating trustless Merkle proof verification for {address} on block {block_number}"
+    ));
 
     let state_root = match expected_state_root {
         Some(root) => root.to_string(),
         None => "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3".into(),
     };
-    notes.push(format!("verified consensus sync committee state root: {state_root}"));
+    notes.push(format!(
+        "verified consensus sync committee state root: {state_root}"
+    ));
 
     // In a live light client, this computes Merkle Patricia Trie verification of account proof bytes
     notes.push("account proof cryptographically verified against block header state root".into());

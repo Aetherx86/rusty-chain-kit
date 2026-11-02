@@ -10,15 +10,31 @@ fn color_enabled() -> bool {
 }
 
 fn paint(code: &str, s: impl AsRef<str>) -> String {
-    if color_enabled() { format!("\x1b[{code}m{}\x1b[0m", s.as_ref()) } else { s.as_ref().to_string() }
+    if color_enabled() {
+        format!("\x1b[{code}m{}\x1b[0m", s.as_ref())
+    } else {
+        s.as_ref().to_string()
+    }
 }
 
-pub fn bold(s: impl AsRef<str>) -> String { paint("1", s) }
-pub fn dim(s: impl AsRef<str>) -> String { paint("2", s) }
-pub fn red(s: impl AsRef<str>) -> String { paint("31", s) }
-pub fn green(s: impl AsRef<str>) -> String { paint("32", s) }
-pub fn yellow(s: impl AsRef<str>) -> String { paint("33", s) }
-pub fn cyan(s: impl AsRef<str>) -> String { paint("36", s) }
+pub fn bold(s: impl AsRef<str>) -> String {
+    paint("1", s)
+}
+pub fn dim(s: impl AsRef<str>) -> String {
+    paint("2", s)
+}
+pub fn red(s: impl AsRef<str>) -> String {
+    paint("31", s)
+}
+pub fn green(s: impl AsRef<str>) -> String {
+    paint("32", s)
+}
+pub fn yellow(s: impl AsRef<str>) -> String {
+    paint("33", s)
+}
+pub fn cyan(s: impl AsRef<str>) -> String {
+    paint("36", s)
+}
 
 pub fn header(s: impl AsRef<str>) {
     println!("{}", bold(cyan(format!("▸ {}", s.as_ref()))));

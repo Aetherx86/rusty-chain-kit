@@ -98,7 +98,10 @@ fn main() {
 
 /// Execute zkVM guest compilation and generate zero-knowledge proof.
 pub fn prove_zk_project(project_dir: &Path) -> Result<ZkProofReport> {
-    let name = project_dir.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "zk_program".into());
+    let name = project_dir
+        .file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "zk_program".into());
     let mut notes = vec![];
     notes.push(format!("compiling `{name}` guest to riscv32im target"));
     notes.push("generating STARK core execution proof and shrinking to SNARK wrapper".into());
@@ -110,7 +113,8 @@ pub fn prove_zk_project(project_dir: &Path) -> Result<ZkProofReport> {
         proof_size_bytes: 256,
         compile_duration_ms: 1200,
         proving_duration_ms: 3450,
-        public_values_hex: "0x0000000000000000000000000000000000000000000000000000000000000037".into(),
+        public_values_hex: "0x0000000000000000000000000000000000000000000000000000000000000037"
+            .into(),
         is_valid: true,
         notes,
     })

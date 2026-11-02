@@ -3,7 +3,11 @@ use clap::Parser;
 use rusty_chain_kit::aa;
 use rusty_chain_kit::analytics;
 use rusty_chain_kit::bytecode;
-use rusty_chain_kit::cli::{AaArgs, AaSubcommand, ChainArgs, ChainSubcommand, Cli, Commands, MevArgs, MevSubcommand, NewArgs, NewKind, ProfileArgs, QueryArgs, ReplArgs, RpcArgs, RpcSubcommand, SimArgs, TraceArgs, VerifyArgs, ZkArgs, ZkSubcommand};
+use rusty_chain_kit::cli::{
+    AaArgs, AaSubcommand, ChainArgs, ChainSubcommand, Cli, Commands, MevArgs, MevSubcommand,
+    NewArgs, NewKind, ProfileArgs, QueryArgs, ReplArgs, RpcArgs, RpcSubcommand, SimArgs, TraceArgs,
+    VerifyArgs, ZkArgs, ZkSubcommand,
+};
 use rusty_chain_kit::mev;
 use rusty_chain_kit::repl;
 use rusty_chain_kit::sim;
@@ -83,7 +87,12 @@ fn test_aa_simulate_bundle_low_verification_gas() {
     }];
     let res = aa::simulate_bundle(&ops);
     assert!(!res[0].valid);
-    assert!(res[0].validation_notes.iter().any(|n| n.contains("dangerously low")));
+    assert!(
+        res[0]
+            .validation_notes
+            .iter()
+            .any(|n| n.contains("dangerously low"))
+    );
 }
 
 #[test]
@@ -103,7 +112,12 @@ fn test_aa_simulate_bundle_fee_mismatch() {
     }];
     let res = aa::simulate_bundle(&ops);
     assert!(!res[0].valid);
-    assert!(res[0].validation_notes.iter().any(|n| n.contains("cannot be less than")));
+    assert!(
+        res[0]
+            .validation_notes
+            .iter()
+            .any(|n| n.contains("cannot be less than"))
+    );
 }
 
 #[test]
@@ -159,7 +173,11 @@ fn test_trace_profile_flamegraph_structure() {
     let (_, root) = trace::profile_opcodes(&struct_logs);
     assert_eq!(root.name, "root_execution");
     assert_eq!(root.children.len(), 2);
-    assert!(root.children.iter().any(|c| c.name.starts_with("KECCAK256")));
+    assert!(
+        root.children
+            .iter()
+            .any(|c| c.name.starts_with("KECCAK256"))
+    );
 }
 
 #[test]
@@ -290,10 +308,9 @@ fn test_bytecode_detect_proxy_eip7702_delegation() {
 fn test_bytecode_detect_proxy_eip1967_direct() {
     let mut slots = BTreeMap::new();
     let impl_slot = B256::from([
-        0x36, 0x08, 0x94, 0xa1, 0x3b, 0xa1, 0xa3, 0x21,
-        0x06, 0x67, 0xc8, 0x28, 0x49, 0x2d, 0xb9, 0x8d,
-        0xca, 0x3e, 0x20, 0x76, 0xcc, 0x37, 0x35, 0xa9,
-        0x20, 0xa3, 0xca, 0x50, 0x5d, 0x38, 0x2b, 0xbc,
+        0x36, 0x08, 0x94, 0xa1, 0x3b, 0xa1, 0xa3, 0x21, 0x06, 0x67, 0xc8, 0x28, 0x49, 0x2d, 0xb9,
+        0x8d, 0xca, 0x3e, 0x20, 0x76, 0xcc, 0x37, 0x35, 0xa9, 0x20, 0xa3, 0xca, 0x50, 0x5d, 0x38,
+        0x2b, 0xbc,
     ]);
     let mut val = [0u8; 32];
     val[12..32].copy_from_slice(&[0x99; 20]);
@@ -309,10 +326,9 @@ fn test_bytecode_detect_proxy_eip1967_direct() {
 fn test_bytecode_detect_proxy_eip1967_beacon() {
     let mut slots = BTreeMap::new();
     let beacon_slot = B256::from([
-        0xa3, 0xf0, 0xad, 0x74, 0xe5, 0x42, 0x3a, 0xeb,
-        0x0d, 0x70, 0x4f, 0xfc, 0x64, 0x60, 0x99, 0x06,
-        0xc7, 0x47, 0x94, 0x86, 0xc4, 0xf0, 0x68, 0xc8,
-        0xe8, 0xd3, 0x5e, 0x4e, 0x76, 0x67, 0x25, 0x33,
+        0xa3, 0xf0, 0xad, 0x74, 0xe5, 0x42, 0x3a, 0xeb, 0x0d, 0x70, 0x4f, 0xfc, 0x64, 0x60, 0x99,
+        0x06, 0xc7, 0x47, 0x94, 0x86, 0xc4, 0xf0, 0x68, 0xc8, 0xe8, 0xd3, 0x5e, 0x4e, 0x76, 0x67,
+        0x25, 0x33,
     ]);
     let mut val = [0u8; 32];
     val[12..32].copy_from_slice(&[0xbb; 20]);
@@ -328,10 +344,9 @@ fn test_bytecode_detect_proxy_eip1967_beacon() {
 fn test_bytecode_detect_proxy_eip1822_uups() {
     let mut slots = BTreeMap::new();
     let uups_slot = B256::from([
-        0xc5, 0xf1, 0x68, 0x36, 0x61, 0x47, 0x64, 0x63,
-        0x97, 0x35, 0x77, 0x94, 0x1d, 0xff, 0x67, 0x90,
-        0x28, 0xe0, 0x07, 0x97, 0x35, 0x69, 0x72, 0xa1,
-        0xa8, 0x42, 0x45, 0x9d, 0x29, 0x0b, 0xa4, 0x9c,
+        0xc5, 0xf1, 0x68, 0x36, 0x61, 0x47, 0x64, 0x63, 0x97, 0x35, 0x77, 0x94, 0x1d, 0xff, 0x67,
+        0x90, 0x28, 0xe0, 0x07, 0x97, 0x35, 0x69, 0x72, 0xa1, 0xa8, 0x42, 0x45, 0x9d, 0x29, 0x0b,
+        0xa4, 0x9c,
     ]);
     let mut val = [0u8; 32];
     val[12..32].copy_from_slice(&[0xcc; 20]);
@@ -412,7 +427,11 @@ fn test_analytics_query_non_select_error() {
 fn test_verify_contract_symbolic_encoding() {
     let tmp = tempfile::tempdir().unwrap();
     let contract_path = tmp.path().join("Vault.sol");
-    std::fs::write(&contract_path, "contract Vault { function invariant_solvency() public {} }").unwrap();
+    std::fs::write(
+        &contract_path,
+        "contract Vault { function invariant_solvency() public {} }",
+    )
+    .unwrap();
 
     let rep = verify::verify_contract(&contract_path, None).unwrap();
     assert_eq!(rep.invariants_checked, 1);
@@ -426,7 +445,8 @@ fn test_verify_contract_custom_invariant() {
     std::fs::write(
         &contract_path,
         "contract Pool { function invariant_balance() public {} function invariant_k() public {} }",
-    ).unwrap();
+    )
+    .unwrap();
 
     let rep = verify::verify_contract(&contract_path, Some("k")).unwrap();
     assert_eq!(rep.invariants_checked, 1);
@@ -461,7 +481,10 @@ fn test_fuzz_contract_detect_counterexample() {
 fn test_repl_eval_keccak256() {
     let res = repl::evaluate_expression("keccak256(\"hello\")").unwrap();
     assert_eq!(res.decoded_type, "bytes32");
-    assert_eq!(res.raw_output, "0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8");
+    assert_eq!(
+        res.raw_output,
+        "0x1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8"
+    );
 }
 
 #[test]
@@ -551,7 +574,8 @@ fn test_mev_backtest_strategy_invalid_range() {
 #[test]
 fn test_trustless_verify_account_proof() {
     let addr = Address::repeat_byte(0x55);
-    let rep = trustless::verify_account_proof("http://127.0.0.1:8545", addr, 20000000, None).unwrap();
+    let rep =
+        trustless::verify_account_proof("http://127.0.0.1:8545", addr, 20000000, None).unwrap();
     assert!(rep.is_verified_trustless);
     assert_eq!(rep.address, addr);
     assert_eq!(rep.nonce, 42);
@@ -586,15 +610,30 @@ fn test_zk_prove_project_output() {
 #[test]
 fn test_cli_aa_generate_auth() {
     let cli = Cli::try_parse_from([
-        "para", "aa", "generate-auth",
-        "--chain-id", "1",
-        "--address", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
-        "--nonce", "42",
-        "--private-key", "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-    ]).unwrap();
+        "para",
+        "aa",
+        "generate-auth",
+        "--chain-id",
+        "1",
+        "--address",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--nonce",
+        "42",
+        "--private-key",
+        "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+    ])
+    .unwrap();
 
     match cli.command.unwrap() {
-        Commands::Aa(AaArgs { action: AaSubcommand::GenerateAuth { chain_id, address, nonce, private_key } }) => {
+        Commands::Aa(AaArgs {
+            action:
+                AaSubcommand::GenerateAuth {
+                    chain_id,
+                    address,
+                    nonce,
+                    private_key,
+                },
+        }) => {
             assert_eq!(chain_id, 1);
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
             assert_eq!(nonce, 42);
@@ -608,7 +647,9 @@ fn test_cli_aa_generate_auth() {
 fn test_cli_aa_bundle() {
     let cli = Cli::try_parse_from(["para", "aa", "bundle", "--json"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Aa(AaArgs { action: AaSubcommand::Bundle { json, .. } }) => {
+        Commands::Aa(AaArgs {
+            action: AaSubcommand::Bundle { json, .. },
+        }) => {
             assert!(json);
         }
         _ => panic!("Expected aa bundle"),
@@ -619,7 +660,9 @@ fn test_cli_aa_bundle() {
 fn test_cli_trace() {
     let cli = Cli::try_parse_from(["para", "trace", "0x12345678", "--json"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Trace(TraceArgs { tx_or_call, json, .. }) => {
+        Commands::Trace(TraceArgs {
+            tx_or_call, json, ..
+        }) => {
             assert_eq!(tx_or_call, "0x12345678");
             assert!(json);
         }
@@ -631,7 +674,11 @@ fn test_cli_trace() {
 fn test_cli_profile() {
     let cli = Cli::try_parse_from(["para", "profile", "0x12345678", "-f", "flame.json"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Profile(ProfileArgs { tx_or_call, flamegraph, .. }) => {
+        Commands::Profile(ProfileArgs {
+            tx_or_call,
+            flamegraph,
+            ..
+        }) => {
             assert_eq!(tx_or_call, "0x12345678");
             assert_eq!(flamegraph, Some(PathBuf::from("flame.json")));
         }
@@ -664,9 +711,12 @@ fn test_cli_query() {
 
 #[test]
 fn test_cli_verify() {
-    let cli = Cli::try_parse_from(["para", "verify", "contracts/Vault.sol", "-i", "solvency"]).unwrap();
+    let cli =
+        Cli::try_parse_from(["para", "verify", "contracts/Vault.sol", "-i", "solvency"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Verify(VerifyArgs { target, invariant, .. }) => {
+        Commands::Verify(VerifyArgs {
+            target, invariant, ..
+        }) => {
             assert_eq!(target.to_str().unwrap(), "contracts/Vault.sol");
             assert_eq!(invariant, Some("solvency".into()));
         }
@@ -689,7 +739,11 @@ fn test_cli_repl() {
 fn test_cli_mev_run() {
     let cli = Cli::try_parse_from(["para", "mev", "run", "bot.rs", "--dry-run"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Mev(MevArgs { action: MevSubcommand::Run { strategy, dry_run, .. } }) => {
+        Commands::Mev(MevArgs {
+            action: MevSubcommand::Run {
+                strategy, dry_run, ..
+            },
+        }) => {
             assert_eq!(strategy.to_str().unwrap(), "bot.rs");
             assert!(dry_run);
         }
@@ -699,9 +753,26 @@ fn test_cli_mev_run() {
 
 #[test]
 fn test_cli_mev_backtest() {
-    let cli = Cli::try_parse_from(["para", "mev", "backtest", "bot.rs", "--start-block", "100", "--end-block", "200"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "mev",
+        "backtest",
+        "bot.rs",
+        "--start-block",
+        "100",
+        "--end-block",
+        "200",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
-        Commands::Mev(MevArgs { action: MevSubcommand::Backtest { strategy, start_block, end_block } }) => {
+        Commands::Mev(MevArgs {
+            action:
+                MevSubcommand::Backtest {
+                    strategy,
+                    start_block,
+                    end_block,
+                },
+        }) => {
             assert_eq!(strategy.to_str().unwrap(), "bot.rs");
             assert_eq!(start_block, 100);
             assert_eq!(end_block, 200);
@@ -712,9 +783,14 @@ fn test_cli_mev_backtest() {
 
 #[test]
 fn test_cli_sim() {
-    let cli = Cli::try_parse_from(["para", "sim", "--steps", "250", "--initial-price", "3500.0"]).unwrap();
+    let cli = Cli::try_parse_from(["para", "sim", "--steps", "250", "--initial-price", "3500.0"])
+        .unwrap();
     match cli.command.unwrap() {
-        Commands::Sim(SimArgs { steps, initial_price, .. }) => {
+        Commands::Sim(SimArgs {
+            steps,
+            initial_price,
+            ..
+        }) => {
             assert_eq!(steps, 250);
             assert_eq!(initial_price, 3500.0);
         }
@@ -726,7 +802,9 @@ fn test_cli_sim() {
 fn test_cli_zk_prove() {
     let cli = Cli::try_parse_from(["para", "zk", "prove", "--json"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Zk(ZkArgs { action: ZkSubcommand::Prove { json, .. } }) => {
+        Commands::Zk(ZkArgs {
+            action: ZkSubcommand::Prove { json, .. },
+        }) => {
             assert!(json);
         }
         _ => panic!("Expected zk prove"),
@@ -734,7 +812,9 @@ fn test_cli_zk_prove() {
 
     let cli_path = Cli::try_parse_from(["para", "zk", "prove", "--path", "my-prover"]).unwrap();
     match cli_path.command.unwrap() {
-        Commands::Zk(ZkArgs { action: ZkSubcommand::Prove { path_flag, .. } }) => {
+        Commands::Zk(ZkArgs {
+            action: ZkSubcommand::Prove { path_flag, .. },
+        }) => {
             assert_eq!(path_flag, Some(std::path::PathBuf::from("my-prover")));
         }
         _ => panic!("Expected zk prove with --path"),
@@ -742,7 +822,9 @@ fn test_cli_zk_prove() {
 
     let cli_pos = Cli::try_parse_from(["para", "zk", "prove", "my-prover"]).unwrap();
     match cli_pos.command.unwrap() {
-        Commands::Zk(ZkArgs { action: ZkSubcommand::Prove { path, .. } }) => {
+        Commands::Zk(ZkArgs {
+            action: ZkSubcommand::Prove { path, .. },
+        }) => {
             assert_eq!(path, Some(std::path::PathBuf::from("my-prover")));
         }
         _ => panic!("Expected zk prove with positional path"),
@@ -753,7 +835,9 @@ fn test_cli_zk_prove() {
 fn test_cli_new_zk() {
     let cli = Cli::try_parse_from(["para", "new", "zk", "my-zk-app"]).unwrap();
     match cli.command.unwrap() {
-        Commands::New(NewArgs { kind: NewKind::Zk { name, .. } }) => {
+        Commands::New(NewArgs {
+            kind: NewKind::Zk { name, .. },
+        }) => {
             assert_eq!(name, "my-zk-app");
         }
         _ => panic!("Expected new zk"),
@@ -762,9 +846,19 @@ fn test_cli_new_zk() {
 
 #[test]
 fn test_cli_rpc_trustless() {
-    let cli = Cli::try_parse_from(["para", "rpc", "trustless", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "--block", "19000000"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "rpc",
+        "trustless",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--block",
+        "19000000",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
-        Commands::Rpc(RpcArgs { action: Some(RpcSubcommand::Trustless { address, block, .. }) }) => {
+        Commands::Rpc(RpcArgs {
+            action: Some(RpcSubcommand::Trustless { address, block, .. }),
+        }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
             assert_eq!(block, Some(19000000));
         }
@@ -774,9 +868,18 @@ fn test_cli_rpc_trustless() {
 
 #[test]
 fn test_cli_chain_tx_decode_aa() {
-    let cli = Cli::try_parse_from(["para", "chain", "tx", "0xabc123", "--decode-aa", "--json"]).unwrap();
+    let cli =
+        Cli::try_parse_from(["para", "chain", "tx", "0xabc123", "--decode-aa", "--json"]).unwrap();
     match cli.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Tx { hash, decode_aa, json }, .. }) => {
+        Commands::Chain(ChainArgs {
+            action:
+                ChainSubcommand::Tx {
+                    hash,
+                    decode_aa,
+                    json,
+                },
+            ..
+        }) => {
             assert_eq!(hash, "0xabc123");
             assert!(decode_aa);
             assert!(json);
@@ -787,9 +890,21 @@ fn test_cli_chain_tx_decode_aa() {
 
 #[test]
 fn test_cli_chain_address_inspect() {
-    let cli = Cli::try_parse_from(["para", "chain", "address", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "--inspect"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "chain",
+        "address",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--inspect",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Address { address, inspect, .. }, .. }) => {
+        Commands::Chain(ChainArgs {
+            action: ChainSubcommand::Address {
+                address, inspect, ..
+            },
+            ..
+        }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
             assert!(inspect);
         }
@@ -799,9 +914,28 @@ fn test_cli_chain_address_inspect() {
 
 #[test]
 fn test_cli_chain_code_proxy_abi_cfg() {
-    let cli = Cli::try_parse_from(["para", "chain", "code", "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045", "--proxy", "--abi", "--cfg"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "chain",
+        "code",
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+        "--proxy",
+        "--abi",
+        "--cfg",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
-        Commands::Chain(ChainArgs { action: ChainSubcommand::Code { address, proxy, abi, cfg, .. }, .. }) => {
+        Commands::Chain(ChainArgs {
+            action:
+                ChainSubcommand::Code {
+                    address,
+                    proxy,
+                    abi,
+                    cfg,
+                    ..
+                },
+            ..
+        }) => {
             assert_eq!(address, "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
             assert!(proxy);
             assert!(abi);
@@ -813,9 +947,24 @@ fn test_cli_chain_code_proxy_abi_cfg() {
 
 #[test]
 fn test_cli_audit_fuzz_prove() {
-    let cli = Cli::try_parse_from(["para", "audit", "contracts/", "--fuzz", "--prove", "--runs", "10000"]).unwrap();
+    let cli = Cli::try_parse_from([
+        "para",
+        "audit",
+        "contracts/",
+        "--fuzz",
+        "--prove",
+        "--runs",
+        "10000",
+    ])
+    .unwrap();
     match cli.command.unwrap() {
-        Commands::Audit(rusty_chain_kit::cli::AuditArgs { path, fuzz, prove, runs, .. }) => {
+        Commands::Audit(rusty_chain_kit::cli::AuditArgs {
+            path,
+            fuzz,
+            prove,
+            runs,
+            ..
+        }) => {
             assert_eq!(path.to_str().unwrap(), "contracts/");
             assert!(fuzz);
             assert!(prove);

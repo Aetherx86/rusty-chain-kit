@@ -24,14 +24,24 @@ pub struct Resolved {
 }
 
 fn is_url(s: &str) -> bool {
-    ["http://", "https://", "ws://", "wss://"].iter().any(|p| s.starts_with(p)) || s.ends_with(".ipc")
+    ["http://", "https://", "ws://", "wss://"]
+        .iter()
+        .any(|p| s.starts_with(p))
+        || s.ends_with(".ipc")
 }
 
 fn builtins(ws: &Workspace) -> Vec<Endpoint> {
     let mut v = vec![];
     for svc in [services::Kind::Devnet, services::Kind::Node] {
-        let url = services::status(ws, svc).map(|s| s.url).unwrap_or_else(|| svc.default_url());
-        v.push(Endpoint { name: svc.alias().into(), url, source: "builtin".into(), chain_id: None });
+        let url = services::status(ws, svc)
+            .map(|s| s.url)
+            .unwrap_or_else(|| svc.default_url());
+        v.push(Endpoint {
+            name: svc.alias().into(),
+            url,
+            source: "builtin".into(),
+            chain_id: None,
+        });
     }
     v
 }
@@ -42,7 +52,12 @@ pub fn list(ws: &Workspace) -> Vec<Endpoint> {
         .rpc
         .endpoints
         .iter()
-        .map(|(n, u)| Endpoint { name: n.clone(), url: u.clone(), source: "para".into(), chain_id: None })
+        .map(|(n, u)| Endpoint {
+            name: n.clone(),
+            url: u.clone(),
+            source: "para".into(),
+            chain_id: None,
+        })
         .collect();
     out.extend(builtins(ws));
     if mesc::is_mesc_enabled() {
@@ -61,18 +76,32 @@ pub fn list(ws: &Workspace) -> Vec<Endpoint> {
 /// Resolve a name / URL / MESC query to a URL.
 pub fn lookup(ws: &Workspace, q: &str) -> Result<Resolved> {
     if is_url(q) {
-        return Ok(Resolved { url: q.to_string(), via: "url".into() });
+        return Ok(Resolved {
+            url: q.to_string(),
+            via: "url".into(),
+        });
     }
     let cfg = ws.load_config();
     if let Some(u) = cfg.rpc.endpoints.get(q) {
-        return Ok(Resolved { url: u.clone(), via: format!("para:{q}") });
+        return Ok(Resolved {
+            url: u.clone(),
+            via: format!("para:{q}"),
+        });
     }
-    if let Some(e) = builtins(ws).into_iter().find(|e| e.name == q || (q == "anvil" && e.name == "local") || (q == "reth" && e.name == "node")) {
-        return Ok(Resolved { url: e.url, via: format!("builtin:{}", e.name) });
+    if let Some(e) = builtins(ws).into_iter().find(|e| {
+        e.name == q || (q == "anvil" && e.name == "local") || (q == "reth" && e.name == "node")
+    }) {
+        return Ok(Resolved {
+            url: e.url,
+            via: format!("builtin:{}", e.name),
+        });
     }
     if mesc::is_mesc_enabled() {
         if let Ok(Some(e)) = mesc::get_endpoint_by_query(q, Some("para")) {
-            return Ok(Resolved { url: e.url, via: format!("mesc:{}", e.name) });
+            return Ok(Resolved {
+                url: e.url,
+                via: format!("mesc:{}", e.name),
+            });
         }
     }
     bail!("unknown RPC endpoint `{q}` (see `para rpc list`, or pass a URL)")
@@ -93,18 +122,29 @@ pub fn resolve(ws: &Workspace, explicit: Option<&str>) -> Result<Resolved> {
     }
     if let Some(d) = ws.load_config().rpc.default {
         if let Ok(r) = lookup(ws, &d) {
-            return Ok(Resolved { url: r.url, via: format!("default ({})", r.via) });
+            return Ok(Resolved {
+                url: r.url,
+                via: format!("default ({})", r.via),
+            });
         }
     }
     if mesc::is_mesc_enabled() {
         if let Ok(Some(e)) = mesc::get_default_endpoint(Some("para")) {
-            return Ok(Resolved { url: e.url, via: format!("mesc default:{}", e.name) });
+            return Ok(Resolved {
+                url: e.url,
+                via: format!("mesc default:{}", e.name),
+            });
         }
     }
     if let Some(s) = services::status(ws, services::Kind::Devnet) {
-        return Ok(Resolved { url: s.url, via: "running devnet".into() });
+        return Ok(Resolved {
+            url: s.url,
+            via: "running devnet".into(),
+        });
     }
-    bail!("no RPC endpoint configured: pass --rpc <name|url>, set ETH_RPC_URL, or `para rpc default <name>`")
+    bail!(
+        "no RPC endpoint configured: pass --rpc <name|url>, set ETH_RPC_URL, or `para rpc default <name>`"
+    )
 }
 
 pub fn set_default(ws: &Workspace, name: Option<String>) -> Result<()> {

@@ -12,7 +12,9 @@ pub fn new_bot(ws: &Workspace, name: &str, target_dir: Option<PathBuf>) -> Resul
         bail!("directory `{}` already exists", out.display());
     }
 
-    ui::header(format!("Scaffolding Artemis-style bot `{name}` (powered by alloy)"));
+    ui::header(format!(
+        "Scaffolding Artemis-style bot `{name}` (powered by alloy)"
+    ));
     fs::create_dir_all(out.join("src"))?;
 
     // Determine alloy dependency path or crates.io version
@@ -25,10 +27,22 @@ pub fn new_bot(ws: &Workspace, name: &str, target_dir: Option<PathBuf>) -> Resul
         .replace("{{alloy_dep}}", &alloy_rel);
 
     fs::write(out.join("Cargo.toml"), cargo_toml)?;
-    fs::write(out.join("README.md"), include_str!("../templates/bot/README.md").replace("{{name}}", name))?;
-    fs::write(out.join("src/main.rs"), include_str!("../templates/bot/src/main.rs").replace("{{name}}", name))?;
-    fs::write(out.join("src/engine.rs"), include_str!("../templates/bot/src/engine.rs"))?;
-    fs::write(out.join("src/strategy.rs"), include_str!("../templates/bot/src/strategy.rs"))?;
+    fs::write(
+        out.join("README.md"),
+        include_str!("../templates/bot/README.md").replace("{{name}}", name),
+    )?;
+    fs::write(
+        out.join("src/main.rs"),
+        include_str!("../templates/bot/src/main.rs").replace("{{name}}", name),
+    )?;
+    fs::write(
+        out.join("src/engine.rs"),
+        include_str!("../templates/bot/src/engine.rs"),
+    )?;
+    fs::write(
+        out.join("src/strategy.rs"),
+        include_str!("../templates/bot/src/strategy.rs"),
+    )?;
 
     ui::ok(format!("Created bot at {}", out.display()));
     ui::info("Next steps:");
@@ -53,8 +67,14 @@ pub fn new_script(ws: &Workspace, name: &str, target_dir: Option<PathBuf>) -> Re
         .replace("{{viem_version}}", viem_ver);
 
     fs::write(out.join("package.json"), pkg_json)?;
-    fs::write(out.join("tsconfig.json"), include_str!("../templates/script/tsconfig.json"))?;
-    fs::write(out.join("src/index.ts"), include_str!("../templates/script/src/index.ts").replace("{{name}}", name))?;
+    fs::write(
+        out.join("tsconfig.json"),
+        include_str!("../templates/script/tsconfig.json"),
+    )?;
+    fs::write(
+        out.join("src/index.ts"),
+        include_str!("../templates/script/src/index.ts").replace("{{name}}", name),
+    )?;
 
     ui::ok(format!("Created viem script at {}", out.display()));
     ui::info("Next steps:");
@@ -70,7 +90,9 @@ pub fn new_contract(ws: &Workspace, name: &str, target_dir: Option<PathBuf>) -> 
         bail!("directory `{}` already exists", out.display());
     }
 
-    ui::header(format!("Scaffolding Solidity project `{name}` (Foundry + Solar)"));
+    ui::header(format!(
+        "Scaffolding Solidity project `{name}` (Foundry + Solar)"
+    ));
     fs::create_dir_all(out.join("src"))?;
     fs::create_dir_all(out.join("test"))?;
     fs::create_dir_all(out.join("script"))?;

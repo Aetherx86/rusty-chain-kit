@@ -130,7 +130,12 @@ pub fn status(ws: &Workspace, kind: Kind) -> Option<ServiceState> {
 
 pub fn start_devnet(ws: &Workspace, o: &DevnetOpts) -> Result<ServiceState> {
     let port = o.port.unwrap_or(Kind::Devnet.default_port());
-    let mut args: Vec<String> = vec!["--host".into(), "127.0.0.1".into(), "--port".into(), port.to_string()];
+    let mut args: Vec<String> = vec![
+        "--host".into(),
+        "127.0.0.1".into(),
+        "--port".into(),
+        port.to_string(),
+    ];
     let mut fork_label = None;
     if let Some(f) = o.fork.as_deref().filter(|s| !s.is_empty()) {
         let r = crate::rpc::lookup(ws, f)?;
@@ -167,11 +172,27 @@ pub fn start_node(ws: &Workspace, o: &NodeOpts) -> Result<ServiceState> {
         std::fs::remove_dir_all(&datadir)?;
     }
     let mut args: Vec<String> = [
-        "node", "--dev", "--datadir", &datadir.display().to_string(),
-        "--http", "--http.addr", "127.0.0.1", "--http.port", &port.to_string(), "--http.api", "all",
-        "--ws", "--ws.addr", "127.0.0.1", "--ws.port", &(port + 1).to_string(),
-        "--authrpc.port", &(port + 6).to_string(),
-        "--port", "30313", "--disable-discovery",
+        "node",
+        "--dev",
+        "--datadir",
+        &datadir.display().to_string(),
+        "--http",
+        "--http.addr",
+        "127.0.0.1",
+        "--http.port",
+        &port.to_string(),
+        "--http.api",
+        "all",
+        "--ws",
+        "--ws.addr",
+        "127.0.0.1",
+        "--ws.port",
+        &(port + 1).to_string(),
+        "--authrpc.port",
+        &(port + 6).to_string(),
+        "--port",
+        "30313",
+        "--disable-discovery",
     ]
     .iter()
     .map(|s| s.to_string())
@@ -183,30 +204,54 @@ pub fn start_node(ws: &Workspace, o: &NodeOpts) -> Result<ServiceState> {
     spawn(ws, Kind::Node, port, args, None)
 }
 
-fn spawn(ws: &Workspace, kind: Kind, port: u16, args: Vec<String>, fork: Option<String>) -> Result<ServiceState> {
+fn spawn(
+    ws: &Workspace,
+    kind: Kind,
+    port: u16,
+    args: Vec<String>,
+    fork: Option<String>,
+) -> Result<ServiceState> {
     if let Some(s) = status(ws, kind) {
-        bail!("{} already running (pid {}, {}); stop it first", kind.name(), s.pid, s.url);
+        bail!(
+            "{} already running (pid {}, {}); stop it first",
+            kind.name(),
+            s.pid,
+            s.url
+        );
     }
-    if std::net::TcpStream::connect_timeout(&([127, 0, 0, 1], port).into(), Duration::from_millis(200)).is_ok() {
+    if std::net::TcpStream::connect_timeout(
+        &([127, 0, 0, 1], port).into(),
+        Duration::from_millis(200),
+    )
+    .is_ok()
+    {
         bail!("port {port} is already in use");
     }
     let bin = tools::require(ws, kind.bin())?;
     let log_path = log_file(ws, kind);
-    let log = std::fs::File::create(&log_path).with_context(|| format!("creating {}", log_path.display()))?;
+    let log = std::fs::File::create(&log_path)
+        .with_context(|| format!("creating {}", log_path.display()))?;
     let mut cmd = Command::new(&bin);
-    cmd.args(&args).stdin(Stdio::null()).stdout(log.try_clone()?).stderr(log);
+    cmd.args(&args)
+        .stdin(Stdio::null())
+        .stdout(log.try_clone()?)
+        .stderr(log);
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
         cmd.process_group(0);
     }
-    let mut child = cmd.spawn().with_context(|| format!("spawning {}", bin.display()))?;
+    let mut child = cmd
+        .spawn()
+        .with_context(|| format!("spawning {}", bin.display()))?;
     let st = ServiceState {
         kind,
         pid: child.id(),
         port,
         url: format!("http://127.0.0.1:{port}"),
-        cmd: std::iter::once(bin.display().to_string()).chain(args).collect(),
+        cmd: std::iter::once(bin.display().to_string())
+            .chain(args)
+            .collect(),
         started_at: now(),
         log: log_path.display().to_string(),
         fork,
@@ -218,13 +263,26 @@ fn spawn(ws: &Workspace, kind: Kind, port: u16, args: Vec<String>, fork: Option<
     loop {
         if let Ok(Some(code)) = child.try_wait() {
             let _ = std::fs::remove_file(state_file(ws, kind));
-            bail!("{} exited early ({code}). Last log lines:\n{}", kind.name(), tail(ws, kind, 15));
+            bail!(
+                "{} exited early ({code}). Last log lines:\n{}",
+                kind.name(),
+                tail(ws, kind, 15)
+            );
         }
-        if std::net::TcpStream::connect_timeout(&([127, 0, 0, 1], port).into(), Duration::from_millis(200)).is_ok() {
+        if std::net::TcpStream::connect_timeout(
+            &([127, 0, 0, 1], port).into(),
+            Duration::from_millis(200),
+        )
+        .is_ok()
+        {
             break;
         }
         if Instant::now() > deadline {
-            bail!("{} did not open port {port} in time; see {}", kind.name(), st.log);
+            bail!(
+                "{} did not open port {port} in time; see {}",
+                kind.name(),
+                st.log
+            );
         }
         std::thread::sleep(Duration::from_millis(250));
     }
@@ -237,14 +295,20 @@ fn spawn(ws: &Workspace, kind: Kind, port: u16, args: Vec<String>, fork: Option<
 }
 
 pub fn stop(ws: &Workspace, kind: Kind) -> Result<bool> {
-    let Some(st) = status(ws, kind) else { return Ok(false) };
-    let _ = Command::new("kill").args(["-TERM", &st.pid.to_string()]).status();
+    let Some(st) = status(ws, kind) else {
+        return Ok(false);
+    };
+    let _ = Command::new("kill")
+        .args(["-TERM", &st.pid.to_string()])
+        .status();
     let deadline = Instant::now() + Duration::from_secs(15);
     while alive(st.pid) && Instant::now() < deadline {
         std::thread::sleep(Duration::from_millis(200));
     }
     if alive(st.pid) {
-        let _ = Command::new("kill").args(["-KILL", &st.pid.to_string()]).status();
+        let _ = Command::new("kill")
+            .args(["-KILL", &st.pid.to_string()])
+            .status();
     }
     let _ = std::fs::remove_file(state_file(ws, kind));
     Ok(true)
@@ -281,12 +345,26 @@ pub fn devnet_accounts(ws: &Workspace) -> Vec<DevAccount> {
         if l.starts_with("Wallet") || l.starts_with("Chain ID") || l.starts_with("Listening") {
             section = "";
         }
-        let Some(rest) = l.strip_prefix('(') else { continue };
-        let Some((idx, val)) = rest.split_once(')') else { continue };
-        let Ok(idx) = idx.trim().parse::<usize>() else { continue };
-        let val = val.split_whitespace().next().unwrap_or_default().to_string();
+        let Some(rest) = l.strip_prefix('(') else {
+            continue;
+        };
+        let Some((idx, val)) = rest.split_once(')') else {
+            continue;
+        };
+        let Ok(idx) = idx.trim().parse::<usize>() else {
+            continue;
+        };
+        let val = val
+            .split_whitespace()
+            .next()
+            .unwrap_or_default()
+            .to_string();
         match section {
-            "acc" => accounts.push(DevAccount { index: idx, address: val, private_key: None }),
+            "acc" => accounts.push(DevAccount {
+                index: idx,
+                address: val,
+                private_key: None,
+            }),
             "key" => {
                 if let Some(a) = accounts.iter_mut().find(|a| a.index == idx) {
                     a.private_key = Some(val);

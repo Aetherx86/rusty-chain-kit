@@ -1,5 +1,7 @@
 use alloy::primitives::U256;
-use rusty_chain_kit::chain::{chain_name, hex_u256, hex_u64, AddressInfo, BlockSummary, ChainInfo, TxSummary};
+use rusty_chain_kit::chain::{
+    AddressInfo, BlockSummary, ChainInfo, TxSummary, chain_name, hex_u64, hex_u256,
+};
 use serde_json::json;
 
 #[test]
@@ -131,7 +133,8 @@ fn test_tx_summary_serialization() {
         effective_gas_price_gwei: Some("20.0".into()),
         fee_eth: Some("0.00042".into()),
         selector: Some("0xa9059cbb".into()),
-        input_bytes: 68, logs: 1,
+        input_bytes: 68,
+        logs: 1,
     };
     let json_val = serde_json::to_value(&tx).unwrap();
     assert_eq!(json_val["hash"], "0xTxHash");
@@ -152,7 +155,10 @@ fn test_address_info_serialization() {
         code_hash: None,
     };
     let json_val = serde_json::to_value(&addr).unwrap();
-    assert_eq!(json_val["address"], "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045");
+    assert_eq!(
+        json_val["address"],
+        "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+    );
     assert_eq!(json_val["is_contract"], false);
     assert_eq!(json_val["nonce"], 10);
 }

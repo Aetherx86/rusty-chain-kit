@@ -88,7 +88,8 @@ pub fn generate_auth(
     let sig_hash = auth.signature_hash();
 
     // Sign using k256
-    let sig = signer.sign_hash_sync(&sig_hash)
+    let sig = signer
+        .sign_hash_sync(&sig_hash)
         .context("failed to sign authorization hash")?;
 
     let y_parity = if sig.v() { 1 } else { 0 };
@@ -115,7 +116,8 @@ pub fn simulate_bundle(user_ops: &[UserOperation]) -> Vec<UserOpSimulationResult
             let mut valid = true;
 
             // Gas calculations
-            let total_gas_limit = op.call_gas_limit
+            let total_gas_limit = op
+                .call_gas_limit
                 .saturating_add(op.verification_gas_limit)
                 .saturating_add(op.pre_verification_gas);
 
@@ -186,7 +188,10 @@ pub fn decode_aa_tx(tx_bytes: &[u8]) -> Result<AaDecodedTx> {
         let payload = &tx_bytes[1..];
         if let Ok(tuples) = parse_eip7702_payload(payload) {
             authorizations = tuples;
-            notes.push(format!("extracted {} authorization tuple(s)", authorizations.len()));
+            notes.push(format!(
+                "extracted {} authorization tuple(s)",
+                authorizations.len()
+            ));
         }
     }
 
@@ -210,7 +215,10 @@ pub fn decode_aa_tx(tx_bytes: &[u8]) -> Result<AaDecodedTx> {
         // Extract pseudo UserOperations if possible
         if let Ok(ops) = extract_user_ops_from_calldata(calldata) {
             user_ops = ops;
-            notes.push(format!("parsed {} UserOperation(s) from bundler calldata", user_ops.len()));
+            notes.push(format!(
+                "parsed {} UserOperation(s) from bundler calldata",
+                user_ops.len()
+            ));
         }
     }
 

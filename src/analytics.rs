@@ -54,7 +54,8 @@ pub fn execute_query(sql: &str, data_dir: Option<&Path>) -> Result<QueryResult> 
             &after_where[..limit_idx]
         } else {
             after_where
-        }.trim();
+        }
+        .trim();
 
         rows = apply_filter(&columns, rows, filter_expr);
     }
@@ -78,9 +79,15 @@ pub fn execute_query(sql: &str, data_dir: Option<&Path>) -> Result<QueryResult> 
     })
 }
 
-fn load_dataset(table_or_file: &str, data_dir: Option<&Path>) -> Result<(Vec<String>, Vec<Vec<serde_json::Value>>)> {
+fn load_dataset(
+    table_or_file: &str,
+    data_dir: Option<&Path>,
+) -> Result<(Vec<String>, Vec<Vec<serde_json::Value>>)> {
     // If table matches a file path
-    if table_or_file.ends_with(".json") || table_or_file.ends_with(".csv") || table_or_file.ends_with(".parquet") {
+    if table_or_file.ends_with(".json")
+        || table_or_file.ends_with(".csv")
+        || table_or_file.ends_with(".parquet")
+    {
         let p = if let Some(dir) = data_dir {
             dir.join(table_or_file)
         } else {
@@ -100,36 +107,98 @@ fn load_dataset(table_or_file: &str, data_dir: Option<&Path>) -> Result<(Vec<Str
     // Fallback built-in analytical tables (blocks, transactions, logs, transfers)
     match table_or_file.to_lowercase().as_str() {
         "blocks" => {
-            let cols = vec!["number".into(), "hash".into(), "gas_used".into(), "tx_count".into(), "base_fee_gwei".into()];
+            let cols = vec![
+                "number".into(),
+                "hash".into(),
+                "gas_used".into(),
+                "tx_count".into(),
+                "base_fee_gwei".into(),
+            ];
             let rows = vec![
-                vec![serde_json::json!(20000001), serde_json::json!("0xaa11..."), serde_json::json!(14250000), serde_json::json!(184), serde_json::json!(22.4)],
-                vec![serde_json::json!(20000002), serde_json::json!("0xbb22..."), serde_json::json!(18500000), serde_json::json!(210), serde_json::json!(24.8)],
-                vec![serde_json::json!(20000003), serde_json::json!("0xcc33..."), serde_json::json!(12100000), serde_json::json!(142), serde_json::json!(19.5)],
-                vec![serde_json::json!(20000004), serde_json::json!("0xdd44..."), serde_json::json!(29400000), serde_json::json!(340), serde_json::json!(35.2)],
+                vec![
+                    serde_json::json!(20000001),
+                    serde_json::json!("0xaa11..."),
+                    serde_json::json!(14250000),
+                    serde_json::json!(184),
+                    serde_json::json!(22.4),
+                ],
+                vec![
+                    serde_json::json!(20000002),
+                    serde_json::json!("0xbb22..."),
+                    serde_json::json!(18500000),
+                    serde_json::json!(210),
+                    serde_json::json!(24.8),
+                ],
+                vec![
+                    serde_json::json!(20000003),
+                    serde_json::json!("0xcc33..."),
+                    serde_json::json!(12100000),
+                    serde_json::json!(142),
+                    serde_json::json!(19.5),
+                ],
+                vec![
+                    serde_json::json!(20000004),
+                    serde_json::json!("0xdd44..."),
+                    serde_json::json!(29400000),
+                    serde_json::json!(340),
+                    serde_json::json!(35.2),
+                ],
             ];
             Ok((cols, rows))
         }
         "transactions" | "txs" => {
-            let cols = vec!["hash".into(), "block".into(), "from".into(), "to".into(), "value_eth".into(), "gas_price_gwei".into()];
+            let cols = vec![
+                "hash".into(),
+                "block".into(),
+                "from".into(),
+                "to".into(),
+                "value_eth".into(),
+                "gas_price_gwei".into(),
+            ];
             let rows = vec![
-                vec![serde_json::json!("0x1a2b..."), serde_json::json!(20000001), serde_json::json!("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"), serde_json::json!("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"), serde_json::json!(2.5), serde_json::json!(25.0)],
-                vec![serde_json::json!("0x3c4d..."), serde_json::json!(20000001), serde_json::json!("0x53415D37aA96045d8dA6BF26964aF9D7eEd9e03E"), serde_json::json!("0x1111111254fb6c44bac0bed2854e76f90643097d"), serde_json::json!(10.0), serde_json::json!(28.5)],
-                vec![serde_json::json!("0x5e6f..."), serde_json::json!(20000002), serde_json::json!("0x2854e76f90643097d53415D37aA96045d8dA6BF2"), serde_json::json!("0x00000000006c3852cbef3e08e8df289169ede581"), serde_json::json!(0.75), serde_json::json!(21.0)],
+                vec![
+                    serde_json::json!("0x1a2b..."),
+                    serde_json::json!(20000001),
+                    serde_json::json!("0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"),
+                    serde_json::json!("0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D"),
+                    serde_json::json!(2.5),
+                    serde_json::json!(25.0),
+                ],
+                vec![
+                    serde_json::json!("0x3c4d..."),
+                    serde_json::json!(20000001),
+                    serde_json::json!("0x53415D37aA96045d8dA6BF26964aF9D7eEd9e03E"),
+                    serde_json::json!("0x1111111254fb6c44bac0bed2854e76f90643097d"),
+                    serde_json::json!(10.0),
+                    serde_json::json!(28.5),
+                ],
+                vec![
+                    serde_json::json!("0x5e6f..."),
+                    serde_json::json!(20000002),
+                    serde_json::json!("0x2854e76f90643097d53415D37aA96045d8dA6BF2"),
+                    serde_json::json!("0x00000000006c3852cbef3e08e8df289169ede581"),
+                    serde_json::json!(0.75),
+                    serde_json::json!(21.0),
+                ],
             ];
             Ok((cols, rows))
         }
         _ => {
             // Default generic empty schema
             let cols = vec!["id".into(), "entity".into(), "value".into()];
-            let rows = vec![
-                vec![serde_json::json!(1), serde_json::json!(table_or_file), serde_json::json!(100)],
-            ];
+            let rows = vec![vec![
+                serde_json::json!(1),
+                serde_json::json!(table_or_file),
+                serde_json::json!(100),
+            ]];
             Ok((cols, rows))
         }
     }
 }
 
-fn parse_json_rows(arr: &[serde_json::Value]) -> Result<(Vec<String>, Vec<Vec<serde_json::Value>>)> {
+fn parse_json_rows(
+    arr: &[serde_json::Value],
+) -> Result<(Vec<String>, Vec<Vec<serde_json::Value>>)> {
     if arr.is_empty() {
         return Ok((vec!["empty".into()], vec![]));
     }
@@ -140,14 +209,21 @@ fn parse_json_rows(arr: &[serde_json::Value]) -> Result<(Vec<String>, Vec<Vec<se
     let mut rows = vec![];
     for item in arr {
         if let Some(obj) = item.as_object() {
-            let row: Vec<serde_json::Value> = cols.iter().map(|c| obj.get(c).cloned().unwrap_or(serde_json::Value::Null)).collect();
+            let row: Vec<serde_json::Value> = cols
+                .iter()
+                .map(|c| obj.get(c).cloned().unwrap_or(serde_json::Value::Null))
+                .collect();
             rows.push(row);
         }
     }
     Ok((cols, rows))
 }
 
-fn apply_filter(cols: &[String], rows: Vec<Vec<serde_json::Value>>, filter_expr: &str) -> Vec<Vec<serde_json::Value>> {
+fn apply_filter(
+    cols: &[String],
+    rows: Vec<Vec<serde_json::Value>>,
+    filter_expr: &str,
+) -> Vec<Vec<serde_json::Value>> {
     let parts: Vec<&str> = filter_expr.split_whitespace().collect();
     if parts.len() < 3 {
         return rows;
@@ -161,40 +237,42 @@ fn apply_filter(cols: &[String], rows: Vec<Vec<serde_json::Value>>, filter_expr:
         None => return rows,
     };
 
-    rows.into_iter().filter(|row| {
-        let cell = &row[col_idx];
-        match op {
-            "=" | "==" => cell.to_string().trim_matches('"') == val_str,
-            "!=" => cell.to_string().trim_matches('"') != val_str,
-            ">" => {
-                if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
-                    c > v
-                } else {
-                    false
+    rows.into_iter()
+        .filter(|row| {
+            let cell = &row[col_idx];
+            match op {
+                "=" | "==" => cell.to_string().trim_matches('"') == val_str,
+                "!=" => cell.to_string().trim_matches('"') != val_str,
+                ">" => {
+                    if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
+                        c > v
+                    } else {
+                        false
+                    }
                 }
-            }
-            "<" => {
-                if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
-                    c < v
-                } else {
-                    false
+                "<" => {
+                    if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
+                        c < v
+                    } else {
+                        false
+                    }
                 }
-            }
-            ">=" => {
-                if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
-                    c >= v
-                } else {
-                    false
+                ">=" => {
+                    if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
+                        c >= v
+                    } else {
+                        false
+                    }
                 }
-            }
-            "<=" => {
-                if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
-                    c <= v
-                } else {
-                    false
+                "<=" => {
+                    if let (Some(c), Ok(v)) = (cell.as_f64(), val_str.parse::<f64>()) {
+                        c <= v
+                    } else {
+                        false
+                    }
                 }
+                _ => true,
             }
-            _ => true,
-        }
-    }).collect()
+        })
+        .collect()
 }

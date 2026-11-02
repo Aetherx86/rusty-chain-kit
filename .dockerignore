@@ -1,0 +1,5 @@
+target/
+.git/
+.para/
+.cargo/advisory-db/
+*.log

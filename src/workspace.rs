@@ -27,13 +27,23 @@ pub struct WorkspaceCfg {
 
 impl Default for WorkspaceCfg {
     fn default() -> Self {
-        Self { root: default_root(), state_dir: default_state_dir(), build_jobs: None }
+        Self {
+            root: default_root(),
+            state_dir: default_state_dir(),
+            build_jobs: None,
+        }
     }
 }
 
-fn default_root() -> String { "..".into() }
-fn default_state_dir() -> String { ".para".into() }
-fn default_remote() -> String { "upstream".into() }
+fn default_root() -> String {
+    "..".into()
+}
+fn default_state_dir() -> String {
+    ".para".into()
+}
+fn default_remote() -> String {
+    "upstream".into()
+}
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default, clap::ValueEnum)]
 #[serde(rename_all = "lowercase")]
@@ -111,10 +121,15 @@ pub enum BuildSpec {
         args: Vec<String>,
     },
     /// Arbitrary build command; `bins` maps binary name -> path relative to the repo.
-    Command { cmd: Vec<String>, bins: BTreeMap<String, String> },
+    Command {
+        cmd: Vec<String>,
+        bins: BTreeMap<String, String>,
+    },
 }
 
-fn default_profile() -> String { "release".into() }
+fn default_profile() -> String {
+    "release".into()
+}
 
 // ───────────────────────────── workspace ─────────────────────────────
 
@@ -136,7 +151,11 @@ impl Workspace {
         }
         if let Ok(mut dir) = std::env::current_dir() {
             loop {
-                for cand in [dir.join("para.toml"), dir.join("para").join("para.toml"), dir.join("rusty-chain-kit").join("para.toml")] {
+                for cand in [
+                    dir.join("para.toml"),
+                    dir.join("para").join("para.toml"),
+                    dir.join("rusty-chain-kit").join("para.toml"),
+                ] {
                     if cand.is_file() {
                         return Self::load(&cand);
                     }
@@ -154,12 +173,16 @@ impl Workspace {
         if built_in.is_file() {
             return Self::load(&built_in);
         }
-        bail!("could not find para.toml or foundry.toml (set PARA_MANIFEST or run inside the workspace)")
+        bail!(
+            "could not find para.toml or foundry.toml (set PARA_MANIFEST or run inside the workspace)"
+        )
     }
 
     /// Automatically load a virtual workspace from an existing `foundry.toml` configuration.
     pub fn from_foundry_toml(path: &Path) -> Result<Self> {
-        let manifest_path = path.canonicalize().with_context(|| format!("reading {}", path.display()))?;
+        let manifest_path = path
+            .canonicalize()
+            .with_context(|| format!("reading {}", path.display()))?;
         let root = manifest_path.parent().unwrap().to_path_buf();
         let state = root.join(".para");
         for sub in ["bin", "logs", "run", "data"] {
@@ -173,21 +196,33 @@ impl Workspace {
             },
             repos: vec![],
         };
-        Ok(Self { manifest_path, root, state, manifest })
+        Ok(Self {
+            manifest_path,
+            root,
+            state,
+            manifest,
+        })
     }
 
     pub fn load(path: &Path) -> Result<Self> {
-        let manifest_path = path.canonicalize().with_context(|| format!("reading {}", path.display()))?;
+        let manifest_path = path
+            .canonicalize()
+            .with_context(|| format!("reading {}", path.display()))?;
         let text = std::fs::read_to_string(&manifest_path)?;
-        let manifest: Manifest =
-            toml::from_str(&text).with_context(|| format!("parsing {}", manifest_path.display()))?;
+        let manifest: Manifest = toml::from_str(&text)
+            .with_context(|| format!("parsing {}", manifest_path.display()))?;
         let base = manifest_path.parent().unwrap().to_path_buf();
         let root = normalize(&base.join(&manifest.workspace.root));
         let state = root.join(&manifest.workspace.state_dir);
         for sub in ["bin", "logs", "run", "data"] {
             std::fs::create_dir_all(state.join(sub)).ok();
         }
-        Ok(Self { manifest_path, root, state, manifest })
+        Ok(Self {
+            manifest_path,
+            root,
+            state,
+            manifest,
+        })
     }
 
     pub fn repo(&self, name: &str) -> Result<&Repo> {
@@ -206,17 +241,32 @@ impl Workspace {
         names.iter().map(|n| self.repo(n)).collect()
     }
 
-    pub fn repo_dir(&self, repo: &Repo) -> PathBuf { self.root.join(&repo.path) }
-    pub fn bin_dir(&self) -> PathBuf { self.state.join("bin") }
-    pub fn logs_dir(&self) -> PathBuf { self.state.join("logs") }
-    pub fn run_dir(&self) -> PathBuf { self.state.join("run") }
-    pub fn data_dir(&self) -> PathBuf { self.state.join("data") }
+    pub fn repo_dir(&self, repo: &Repo) -> PathBuf {
+        self.root.join(&repo.path)
+    }
+    pub fn bin_dir(&self) -> PathBuf {
+        self.state.join("bin")
+    }
+    pub fn logs_dir(&self) -> PathBuf {
+        self.state.join("logs")
+    }
+    pub fn run_dir(&self) -> PathBuf {
+        self.state.join("run")
+    }
+    pub fn data_dir(&self) -> PathBuf {
+        self.state.join("data")
+    }
     #[allow(dead_code)]
-    pub fn para_dir(&self) -> PathBuf { self.manifest_path.parent().unwrap().to_path_buf() }
+    pub fn para_dir(&self) -> PathBuf {
+        self.manifest_path.parent().unwrap().to_path_buf()
+    }
 
     /// The repo that provides a given binary.
     pub fn repo_for_bin(&self, bin: &str) -> Option<&Repo> {
-        self.manifest.repos.iter().find(|r| r.bins().iter().any(|b| b == bin))
+        self.manifest
+            .repos
+            .iter()
+            .find(|r| r.bins().iter().any(|b| b == bin))
     }
 
     pub fn all_bins(&self) -> Vec<(String, String)> {
@@ -235,15 +285,23 @@ impl Workspace {
     }
 
     pub fn save_state(&self, st: &State) -> Result<()> {
-        std::fs::write(self.state.join("state.json"), serde_json::to_string_pretty(st)?)?;
+        std::fs::write(
+            self.state.join("state.json"),
+            serde_json::to_string_pretty(st)?,
+        )?;
         Ok(())
     }
 
-    pub fn config_path(&self) -> PathBuf { self.state.join("config.toml") }
+    pub fn config_path(&self) -> PathBuf {
+        self.state.join("config.toml")
+    }
 
     pub fn load_config(&self) -> Config {
         let p = self.config_path();
-        if let Some(cfg) = std::fs::read_to_string(&p).ok().and_then(|s| toml::from_str(&s).ok()) {
+        if let Some(cfg) = std::fs::read_to_string(&p)
+            .ok()
+            .and_then(|s| toml::from_str(&s).ok())
+        {
             return cfg;
         }
         let cfg = Config::default();
@@ -300,7 +358,11 @@ pub struct Config {
 }
 
 impl Default for Config {
-    fn default() -> Self { Self { rpc: RpcConfig::default() } }
+    fn default() -> Self {
+        Self {
+            rpc: RpcConfig::default(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -324,7 +386,10 @@ impl Default for RpcConfig {
         .into_iter()
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect();
-        Self { default: Some("mainnet".into()), endpoints }
+        Self {
+            default: Some("mainnet".into()),
+            endpoints,
+        }
     }
 }
 

@@ -44,14 +44,24 @@ pub fn require(ws: &Workspace, bin: &str) -> Result<PathBuf> {
 pub fn version(path: &PathBuf) -> Option<String> {
     if let Ok(out) = Command::new(path).arg("--version").output() {
         if out.status.success() {
-            let s = String::from_utf8_lossy(if out.stdout.is_empty() { &out.stderr } else { &out.stdout }).to_string();
+            let s = String::from_utf8_lossy(if out.stdout.is_empty() {
+                &out.stderr
+            } else {
+                &out.stdout
+            })
+            .to_string();
             if let Some(line) = s.lines().find(|l| !l.trim().is_empty()) {
                 return Some(line.trim().to_string());
             }
         }
     }
     if let Ok(out) = Command::new(path).arg("--help").output() {
-        let s = String::from_utf8_lossy(if out.stdout.is_empty() { &out.stderr } else { &out.stdout }).to_string();
+        let s = String::from_utf8_lossy(if out.stdout.is_empty() {
+            &out.stderr
+        } else {
+            &out.stdout
+        })
+        .to_string();
         if let Some(line) = s.lines().find(|l| !l.trim().is_empty()) {
             return Some(line.trim().to_string());
         }
@@ -73,9 +83,16 @@ pub fn list(ws: &Workspace, with_versions: bool) -> Vec<ToolInfo> {
                 _ => false,
             };
             ToolInfo {
-                version: if with_versions { resolved.as_ref().and_then(|(p, _)| version(p)) } else { None },
+                version: if with_versions {
+                    resolved.as_ref().and_then(|(p, _)| version(p))
+                } else {
+                    None
+                },
                 path: resolved.as_ref().map(|(p, _)| p.display().to_string()),
-                source: resolved.as_ref().map(|(_, s)| s.to_string()).unwrap_or_else(|| "missing".into()),
+                source: resolved
+                    .as_ref()
+                    .map(|(_, s)| s.to_string())
+                    .unwrap_or_else(|| "missing".into()),
                 built_commit: built.map(|b| b.commit.chars().take(10).collect()),
                 repo_head: repo_head.map(|h| h.chars().take(10).collect()),
                 stale,
@@ -106,7 +123,12 @@ pub fn exec(ws: &Workspace, bin: &str, args: &[String]) -> Result<()> {
 
 /// Run a tool to completion, inheriting stdio. Errors on non-zero exit.
 #[allow(dead_code)]
-pub fn run(ws: &Workspace, bin: &str, args: &[String], cwd: Option<&std::path::Path>) -> Result<()> {
+pub fn run(
+    ws: &Workspace,
+    bin: &str,
+    args: &[String],
+    cwd: Option<&std::path::Path>,
+) -> Result<()> {
     let path = require(ws, bin)?;
     let mut cmd = Command::new(&path);
     cmd.args(args);
@@ -115,7 +137,13 @@ pub fn run(ws: &Workspace, bin: &str, args: &[String], cwd: Option<&std::path::P
     }
     let status = cmd.status()?;
     if !status.success() {
-        bail!("{bin} exited with {}", status.code().map(|c| c.to_string()).unwrap_or_else(|| "signal".into()));
+        bail!(
+            "{bin} exited with {}",
+            status
+                .code()
+                .map(|c| c.to_string())
+                .unwrap_or_else(|| "signal".into())
+        );
     }
     Ok(())
 }

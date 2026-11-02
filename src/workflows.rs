@@ -25,7 +25,10 @@ pub fn compile(ws: &Workspace, target: &Path, prefer_solar: bool) -> Result<Comp
     let has_forge = tools::resolve(ws, "forge").is_some();
 
     if prefer_solar && has_solar {
-        ui::header(format!("Compiling {} with Solar (blazingly fast)", target.display()));
+        ui::header(format!(
+            "Compiling {} with Solar (blazingly fast)",
+            target.display()
+        ));
         let solar = tools::require(ws, "solar")?;
         let out = Command::new(solar)
             .arg(target)
@@ -59,7 +62,9 @@ pub fn compile(ws: &Workspace, target: &Path, prefer_solar: bool) -> Result<Comp
             "{}\n{}",
             String::from_utf8_lossy(&out.stdout),
             String::from_utf8_lossy(&out.stderr)
-        ).trim().to_string();
+        )
+        .trim()
+        .to_string();
 
         return Ok(CompileResult {
             compiler: "forge".into(),
@@ -84,7 +89,10 @@ pub struct AuditReport {
 
 pub fn audit(ws: &Workspace, path: &Path) -> Result<AuditReport> {
     if let Some((aderyn, _)) = tools::resolve(ws, "aderyn") {
-        ui::header(format!("Running Aderyn static security audit on {}", path.display()));
+        ui::header(format!(
+            "Running Aderyn static security audit on {}",
+            path.display()
+        ));
         let out = Command::new(aderyn)
             .arg("--root")
             .arg(path)
@@ -93,7 +101,11 @@ pub fn audit(ws: &Workspace, path: &Path) -> Result<AuditReport> {
             .output()
             .context("failed to run aderyn")?;
 
-        let raw = format!("{}\n{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+        let raw = format!(
+            "{}\n{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
         return Ok(AuditReport {
             tool: "aderyn".into(),
             summary: "Aderyn static analysis finished".into(),
@@ -111,7 +123,11 @@ pub fn audit(ws: &Workspace, path: &Path) -> Result<AuditReport> {
             .output()
             .context("failed to run solar linter")?;
 
-        let raw = format!("{}\n{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+        let raw = format!(
+            "{}\n{}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        );
         return Ok(AuditReport {
             tool: "solar-lint".into(),
             summary: "Solar lint analysis completed".into(),
@@ -133,15 +149,23 @@ pub struct DecompileResult {
     pub disassembly: Option<String>,
 }
 
-pub async fn decompile(ws: &Workspace, rpc_url: Option<&str>, target: &str) -> Result<DecompileResult> {
+pub async fn decompile(
+    ws: &Workspace,
+    rpc_url: Option<&str>,
+    target: &str,
+) -> Result<DecompileResult> {
     let bytecode: String = if target.starts_with("0x") && target.len() == 42 {
         let rpc = crate::rpc::resolve(ws, rpc_url)?;
-        ui::info(format!("Fetching onchain bytecode for {target} via {}", rpc.url));
+        ui::info(format!(
+            "Fetching onchain bytecode for {target} via {}",
+            rpc.url
+        ));
         chain::code(&rpc.url, target).await?
     } else if target.starts_with("0x") || target.chars().all(|c| c.is_ascii_hexdigit()) {
         target.to_string()
     } else {
-        std::fs::read_to_string(target).with_context(|| format!("reading bytecode file {target}"))?
+        std::fs::read_to_string(target)
+            .with_context(|| format!("reading bytecode file {target}"))?
     };
 
     let clean_hex = bytecode.trim().trim_start_matches("0x");
@@ -173,15 +197,16 @@ pub async fn decompile(ws: &Workspace, rpc_url: Option<&str>, target: &str) -> R
         }
     } else if let Some((cast, _)) = tools::resolve(ws, "cast") {
         ui::header(format!("Disassembling {byte_len} bytes using Cast"));
-        let dis = Command::new(cast)
-            .args(["disassemble", clean_hex])
-            .output();
+        let dis = Command::new(cast).args(["disassemble", clean_hex]).output();
         if let Ok(d) = dis {
             disasm = Some(String::from_utf8_lossy(&d.stdout).to_string());
         }
         decompiled = "// Heimdall not built yet. Disassembly provided via Cast.\n// Build heimdall with `para build heimdall` for full Solidity recovery.\n".into();
     } else {
-        decompiled = format!("// Bytecode length: {} bytes\n// Build heimdall with `para build heimdall` to decompile.\n", byte_len);
+        decompiled = format!(
+            "// Bytecode length: {} bytes\n// Build heimdall with `para build heimdall` to decompile.\n",
+            byte_len
+        );
     }
 
     Ok(DecompileResult {
@@ -206,10 +231,17 @@ pub struct ExtractOpts {
 pub fn extract(ws: &Workspace, opts: &ExtractOpts) -> Result<String> {
     let cryo = tools::require(ws, "cryo")?;
     let rpc = crate::rpc::resolve(ws, opts.rpc_url.as_deref())?;
-    let out_dir = opts.output_dir.clone().unwrap_or_else(|| ws.data_dir().join("cryo"));
+    let out_dir = opts
+        .output_dir
+        .clone()
+        .unwrap_or_else(|| ws.data_dir().join("cryo"));
     std::fs::create_dir_all(&out_dir)?;
 
-    ui::header(format!("Extracting dataset `{}` via Cryo to {}", opts.datatype, out_dir.display()));
+    ui::header(format!(
+        "Extracting dataset `{}` via Cryo to {}",
+        opts.datatype,
+        out_dir.display()
+    ));
 
     let mut cmd = Command::new(cryo);
     cmd.arg(&opts.datatype)
@@ -226,7 +258,11 @@ pub fn extract(ws: &Workspace, opts: &ExtractOpts) -> Result<String> {
     }
 
     let output = cmd.output().context("failed to run cryo")?;
-    let text = format!("{}\n{}", String::from_utf8_lossy(&output.stdout), String::from_utf8_lossy(&output.stderr));
+    let text = format!(
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
     if !output.status.success() {
         bail!("cryo failed: {}", text.trim());
     }

@@ -157,7 +157,13 @@ pub fn handle_update(ws: &Workspace, args: cli::UpdateArgs) -> Result<()> {
 pub fn handle_repos(ws: &Workspace, args: cli::ReposArgs) -> Result<()> {
     match args.action.unwrap_or(cli::ReposSubcommand::Status) {
         cli::ReposSubcommand::List => {
-            let mut t = ui::table(&["Repository", "Category", "Upstream Origin", "Branch", "Description"]);
+            let mut t = ui::table(&[
+                "Repository",
+                "Category",
+                "Upstream Origin",
+                "Branch",
+                "Description",
+            ]);
             for r in &ws.manifest.repos {
                 t.add_row(vec![
                     r.name.clone(),
@@ -190,13 +196,23 @@ pub fn handle_repos(ws: &Workspace, args: cli::ReposArgs) -> Result<()> {
                     st.upstream_ref,
                     st.ahead.to_string(),
                     st.behind.to_string(),
-                    if st.dirty > 0 { format!("{} files", st.dirty) } else { "clean".into() },
+                    if st.dirty > 0 {
+                        format!("{} files", st.dirty)
+                    } else {
+                        "clean".into()
+                    },
                     st.head,
                 ]);
             }
             println!("{t}");
         }
-        cli::ReposSubcommand::Sync { repos, strategy, no_stash, dry_run, push } => {
+        cli::ReposSubcommand::Sync {
+            repos,
+            strategy,
+            no_stash,
+            dry_run,
+            push,
+        } => {
             let targets = ws.select(&repos)?;
             let opts = git::SyncOpts {
                 strategy,
@@ -207,18 +223,31 @@ pub fn handle_repos(ws: &Workspace, args: cli::ReposArgs) -> Result<()> {
             ui::header(format!(
                 "Syncing {} Repositories (Strategy: {}, DryRun: {})",
                 targets.len(),
-                opts.strategy.map(|s| s.to_string()).unwrap_or_else(|| "default".into()),
+                opts.strategy
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| "default".into()),
                 dry_run
             ));
             for r in targets {
                 let rep = git::sync(ws, r, &opts);
                 match rep.outcome {
-                    git::Outcome::UpToDate => ui::info(format!("{}: up to date ({})", r.name, rep.from)),
-                    git::Outcome::Updated => ui::ok(format!("{}: updated {} -> {}", r.name, rep.from, rep.to)),
-                    git::Outcome::WouldUpdate => ui::warn(format!("{}: would update {} -> {}", r.name, rep.from, rep.to)),
-                    git::Outcome::Cloned => ui::ok(format!("{}: cloned fresh ({})", r.name, rep.to)),
+                    git::Outcome::UpToDate => {
+                        ui::info(format!("{}: up to date ({})", r.name, rep.from))
+                    }
+                    git::Outcome::Updated => {
+                        ui::ok(format!("{}: updated {} -> {}", r.name, rep.from, rep.to))
+                    }
+                    git::Outcome::WouldUpdate => ui::warn(format!(
+                        "{}: would update {} -> {}",
+                        r.name, rep.from, rep.to
+                    )),
+                    git::Outcome::Cloned => {
+                        ui::ok(format!("{}: cloned fresh ({})", r.name, rep.to))
+                    }
                     git::Outcome::Conflict => ui::fail(format!("{}: merge conflict!", r.name)),
-                    git::Outcome::Diverged => ui::fail(format!("{}: diverged from upstream", r.name)),
+                    git::Outcome::Diverged => {
+                        ui::fail(format!("{}: diverged from upstream", r.name))
+                    }
                     git::Outcome::Error => ui::fail(format!("{}: sync failed", r.name)),
                 }
                 for note in rep.notes {
@@ -279,7 +308,13 @@ pub fn handle_tools(ws: &Workspace, args: cli::ToolsArgs) -> Result<()> {
     match args.action.unwrap_or(cli::ToolsSubcommand::List) {
         cli::ToolsSubcommand::List => {
             ui::header("Tool Registry (.para/bin and System PATH)");
-            let mut t = ui::table(&["Binary", "Providing Repo", "Source", "Resolved Path", "Version"]);
+            let mut t = ui::table(&[
+                "Binary",
+                "Providing Repo",
+                "Source",
+                "Resolved Path",
+                "Version",
+            ]);
             for tool in tools::list(ws, true) {
                 t.add_row(vec![
                     tool.bin,
@@ -337,11 +372,21 @@ pub fn handle_rpc(ws: &Workspace, args: cli::RpcArgs) -> Result<()> {
             rpc::remove(ws, &name)?;
             ui::ok(format!("Removed RPC alias `{name}`"));
         }
-        cli::RpcSubcommand::Trustless { address, block, expected_root, rpc } => {
+        cli::RpcSubcommand::Trustless {
+            address,
+            block,
+            expected_root,
+            rpc,
+        } => {
             let resolved = rpc::resolve(ws, rpc.as_deref())?;
             let addr = Address::from_str(&address).context("invalid address")?;
             let block_num = block.unwrap_or(20000000);
-            let report = trustless::verify_account_proof(&resolved.url, addr, block_num, expected_root.as_deref())?;
+            let report = trustless::verify_account_proof(
+                &resolved.url,
+                addr,
+                block_num,
+                expected_root.as_deref(),
+            )?;
             ui::header("Trustless Merkle-Patricia Trie Proof Verification");
             ui::kv("RPC Endpoint", report.rpc_url);
             ui::kv("Block Number", report.block_number);
@@ -350,7 +395,14 @@ pub fn handle_rpc(ws: &Workspace, args: cli::RpcArgs) -> Result<()> {
             ui::kv("Verified Balance", report.balance);
             ui::kv("Verified Nonce", report.nonce);
             ui::kv("Verified Code Hash", report.code_hash);
-            ui::kv("Status", if report.is_verified_trustless { "VERIFIED TRUSTLESS" } else { "FAILED" });
+            ui::kv(
+                "Status",
+                if report.is_verified_trustless {
+                    "VERIFIED TRUSTLESS"
+                } else {
+                    "FAILED"
+                },
+            );
             for n in report.notes {
                 println!("  - {n}");
             }
@@ -361,7 +413,14 @@ pub fn handle_rpc(ws: &Workspace, args: cli::RpcArgs) -> Result<()> {
 
 pub fn handle_devnet(ws: &Workspace, args: cli::DevnetArgs) -> Result<()> {
     match args.action.unwrap_or(cli::DevnetSubcommand::Status) {
-        cli::DevnetSubcommand::Up { port, fork, fork_block, chain_id, block_time, persist } => {
+        cli::DevnetSubcommand::Up {
+            port,
+            fork,
+            fork_block,
+            chain_id,
+            block_time,
+            persist,
+        } => {
             let opts = services::DevnetOpts {
                 port: Some(port),
                 fork,
@@ -372,7 +431,10 @@ pub fn handle_devnet(ws: &Workspace, args: cli::DevnetArgs) -> Result<()> {
                 ..Default::default()
             };
             let st = services::start_devnet(ws, &opts)?;
-            ui::ok(format!("Anvil devnet started on {} (PID {})", st.url, st.pid));
+            ui::ok(format!(
+                "Anvil devnet started on {} (PID {})",
+                st.url, st.pid
+            ));
             ui::info(format!("Logs: {}", st.log));
         }
         cli::DevnetSubcommand::Down => {
@@ -382,12 +444,13 @@ pub fn handle_devnet(ws: &Workspace, args: cli::DevnetArgs) -> Result<()> {
                 ui::info("Anvil devnet was not running");
             }
         }
-        cli::DevnetSubcommand::Status => {
-            match services::status(ws, services::Kind::Devnet) {
-                Some(st) => ui::ok(format!("Anvil devnet is RUNNING at {} (PID {})", st.url, st.pid)),
-                None => ui::info("Anvil devnet is STOPPED"),
-            }
-        }
+        cli::DevnetSubcommand::Status => match services::status(ws, services::Kind::Devnet) {
+            Some(st) => ui::ok(format!(
+                "Anvil devnet is RUNNING at {} (PID {})",
+                st.url, st.pid
+            )),
+            None => ui::info("Anvil devnet is STOPPED"),
+        },
         cli::DevnetSubcommand::Accounts => {
             let accs = services::devnet_accounts(ws);
             if accs.is_empty() {
@@ -413,7 +476,11 @@ pub fn handle_devnet(ws: &Workspace, args: cli::DevnetArgs) -> Result<()> {
 
 pub fn handle_node(ws: &Workspace, args: cli::NodeArgs) -> Result<()> {
     match args.action.unwrap_or(cli::NodeSubcommand::Status) {
-        cli::NodeSubcommand::Up { port, block_time, fresh } => {
+        cli::NodeSubcommand::Up {
+            port,
+            block_time,
+            fresh,
+        } => {
             let opts = services::NodeOpts {
                 port: Some(port),
                 block_time: Some(block_time),
@@ -421,7 +488,10 @@ pub fn handle_node(ws: &Workspace, args: cli::NodeArgs) -> Result<()> {
                 ..Default::default()
             };
             let st = services::start_node(ws, &opts)?;
-            ui::ok(format!("Reth dev node started on {} (PID {})", st.url, st.pid));
+            ui::ok(format!(
+                "Reth dev node started on {} (PID {})",
+                st.url, st.pid
+            ));
         }
         cli::NodeSubcommand::Down => {
             if services::stop(ws, services::Kind::Node)? {
@@ -430,12 +500,13 @@ pub fn handle_node(ws: &Workspace, args: cli::NodeArgs) -> Result<()> {
                 ui::info("Reth dev node was not running");
             }
         }
-        cli::NodeSubcommand::Status => {
-            match services::status(ws, services::Kind::Node) {
-                Some(st) => ui::ok(format!("Reth dev node is RUNNING at {} (PID {})", st.url, st.pid)),
-                None => ui::info("Reth dev node is STOPPED"),
-            }
-        }
+        cli::NodeSubcommand::Status => match services::status(ws, services::Kind::Node) {
+            Some(st) => ui::ok(format!(
+                "Reth dev node is RUNNING at {} (PID {})",
+                st.url, st.pid
+            )),
+            None => ui::info("Reth dev node is STOPPED"),
+        },
         cli::NodeSubcommand::Logs { lines } => {
             println!("{}", services::tail(ws, services::Kind::Node, lines));
         }
@@ -469,13 +540,20 @@ pub async fn handle_chain(ws: &Workspace, args: cli::ChainArgs) -> Result<()> {
             ui::kv("Hash", summary.hash);
             ui::kv("Timestamp", summary.time);
             ui::kv("Transactions", summary.tx_count);
-            ui::kv("Gas Used", format!("{} / {}", summary.gas_used, summary.gas_limit));
+            ui::kv(
+                "Gas Used",
+                format!("{} / {}", summary.gas_used, summary.gas_limit),
+            );
             if let Some(b) = summary.base_fee_gwei {
                 ui::kv("Base Fee", format!("{b} Gwei"));
             }
             ui::kv("Miner", summary.miner);
         }
-        cli::ChainSubcommand::Tx { hash, decode_aa, json } => {
+        cli::ChainSubcommand::Tx {
+            hash,
+            decode_aa,
+            json,
+        } => {
             let (tx, _, raw_json) = chain::tx(&rpc.url, &hash).await?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&raw_json)?);
@@ -512,16 +590,30 @@ pub async fn handle_chain(ws: &Workspace, args: cli::ChainArgs) -> Result<()> {
                 }
             }
         }
-        cli::ChainSubcommand::Address { address, inspect, json } => {
+        cli::ChainSubcommand::Address {
+            address,
+            inspect,
+            json,
+        } => {
             let a = chain::address(&rpc.url, &address).await?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&a)?);
                 return Ok(());
             }
             ui::header(format!("Address {}", a.address));
-            ui::kv("Balance", format!("{} ETH ({} wei)", a.balance_eth, a.balance_wei));
+            ui::kv(
+                "Balance",
+                format!("{} ETH ({} wei)", a.balance_eth, a.balance_wei),
+            );
             ui::kv("Nonce", a.nonce);
-            ui::kv("Type", if a.is_contract { "Smart Contract" } else { "EOA (Externally Owned Account)" });
+            ui::kv(
+                "Type",
+                if a.is_contract {
+                    "Smart Contract"
+                } else {
+                    "EOA (Externally Owned Account)"
+                },
+            );
             ui::kv("Bytecode Size", format!("{} bytes", a.code_size));
             if let Some(h) = a.code_hash {
                 ui::kv("Code Hash", h);
@@ -538,12 +630,25 @@ pub async fn handle_chain(ws: &Workspace, args: cli::ChainArgs) -> Result<()> {
                         println!("    selector: {} ({})", f.selector, f.state_mutability);
                     }
                     let proxy = bytecode::detect_proxy(&bytes, &BTreeMap::new());
-                    ui::kv("Proxy Status", if proxy.is_proxy { "PROXY DETECTED" } else { "Direct Implementation" });
+                    ui::kv(
+                        "Proxy Status",
+                        if proxy.is_proxy {
+                            "PROXY DETECTED"
+                        } else {
+                            "Direct Implementation"
+                        },
+                    );
                     ui::kv("Proxy Details", proxy.details);
                 }
             }
         }
-        cli::ChainSubcommand::Code { address, proxy, abi, cfg, json } => {
+        cli::ChainSubcommand::Code {
+            address,
+            proxy,
+            abi,
+            cfg,
+            json,
+        } => {
             let code_hex = chain::code(&rpc.url, &address).await?;
             let clean = code_hex.trim_start_matches("0x");
             let bytes = alloy::hex::decode(clean).unwrap_or_default();
@@ -637,13 +742,26 @@ pub fn handle_audit(ws: &Workspace, args: cli::AuditArgs) -> Result<()> {
     }
 
     if args.fuzz {
-        ui::header(format!("Running Stateful Invariant Fuzzer on {}", args.path.display()));
+        ui::header(format!(
+            "Running Stateful Invariant Fuzzer on {}",
+            args.path.display()
+        ));
         let report = verify::fuzz_contract(&args.path, args.runs.unwrap_or(5000), None)?;
         ui::kv("Target", report.target);
         ui::kv("Iterations", report.iterations);
-        ui::kv("Throughput", format!("{:.2} runs/sec", report.runs_per_second));
+        ui::kv(
+            "Throughput",
+            format!("{:.2} runs/sec", report.runs_per_second),
+        );
         ui::kv("Corpus Size", report.corpus_size);
-        ui::kv("Invariants Held", if report.invariants_held { "ALL PASSED" } else { "VIOLATION DETECTED" });
+        ui::kv(
+            "Invariants Held",
+            if report.invariants_held {
+                "ALL PASSED"
+            } else {
+                "VIOLATION DETECTED"
+            },
+        );
         if let Some(seq) = report.breaking_call_sequence {
             ui::warn("Counterexample call sequence:");
             for step in seq {
@@ -654,7 +772,14 @@ pub fn handle_audit(ws: &Workspace, args: cli::AuditArgs) -> Result<()> {
     }
 
     if args.prove {
-        return handle_verify(ws, cli::VerifyArgs { target: args.path, invariant: None, json: false });
+        return handle_verify(
+            ws,
+            cli::VerifyArgs {
+                target: args.path,
+                invariant: None,
+                json: false,
+            },
+        );
     }
 
     let res = workflows::audit(ws, &args.path)?;
@@ -663,7 +788,10 @@ pub fn handle_audit(ws: &Workspace, args: cli::AuditArgs) -> Result<()> {
 }
 
 pub fn handle_verify(_ws: &Workspace, args: cli::VerifyArgs) -> Result<()> {
-    ui::header(format!("Symbolic Invariant Verification on {}", args.target.display()));
+    ui::header(format!(
+        "Symbolic Invariant Verification on {}",
+        args.target.display()
+    ));
     let rep = verify::verify_contract(&args.target, args.invariant.as_deref())?;
     if args.json {
         println!("{}", serde_json::to_string_pretty(&rep)?);
@@ -686,7 +814,12 @@ pub fn handle_verify(_ws: &Workspace, args: cli::VerifyArgs) -> Result<()> {
 
 pub fn handle_aa(_ws: &Workspace, args: cli::AaArgs) -> Result<()> {
     match args.action {
-        cli::AaSubcommand::GenerateAuth { chain_id, address, nonce, private_key } => {
+        cli::AaSubcommand::GenerateAuth {
+            chain_id,
+            address,
+            nonce,
+            private_key,
+        } => {
             let target = Address::from_str(&address).context("invalid target address")?;
             let tuple = aa::generate_auth(chain_id, target, nonce, &private_key)?;
             ui::header("EIP-7702 Signed Authorization Tuple");
@@ -700,34 +833,40 @@ pub fn handle_aa(_ws: &Workspace, args: cli::AaArgs) -> Result<()> {
         }
         cli::AaSubcommand::Bundle { file: _, json } => {
             // Default sample bundle simulation
-            let sample_ops = vec![
-                aa::UserOperation {
-                    sender: Address::repeat_byte(0x11),
-                    nonce: U256::ZERO,
-                    init_code: alloy::primitives::Bytes::new(),
-                    call_data: alloy::primitives::Bytes::from_static(&[0xa9, 0x05, 0x9c, 0xbb]),
-                    call_gas_limit: U256::from(100_000),
-                    verification_gas_limit: U256::from(50_000),
-                    pre_verification_gas: U256::from(21_000),
-                    max_fee_per_gas: U256::from(30_000_000_000u64),
-                    max_priority_fee_per_gas: U256::from(1_500_000_000u64),
-                    paymaster_and_data: alloy::primitives::Bytes::from_static(&[0x22; 20]),
-                    signature: alloy::primitives::Bytes::from_static(&[0xaa; 65]),
-                }
-            ];
+            let sample_ops = vec![aa::UserOperation {
+                sender: Address::repeat_byte(0x11),
+                nonce: U256::ZERO,
+                init_code: alloy::primitives::Bytes::new(),
+                call_data: alloy::primitives::Bytes::from_static(&[0xa9, 0x05, 0x9c, 0xbb]),
+                call_gas_limit: U256::from(100_000),
+                verification_gas_limit: U256::from(50_000),
+                pre_verification_gas: U256::from(21_000),
+                max_fee_per_gas: U256::from(30_000_000_000u64),
+                max_priority_fee_per_gas: U256::from(1_500_000_000u64),
+                paymaster_and_data: alloy::primitives::Bytes::from_static(&[0x22; 20]),
+                signature: alloy::primitives::Bytes::from_static(&[0xaa; 65]),
+            }];
             let results = aa::simulate_bundle(&sample_ops);
             if json {
                 println!("{}", serde_json::to_string_pretty(&results)?);
             } else {
                 ui::header("ERC-4337 UserOperation Bundle Simulation");
-                let mut t = ui::table(&["Sender", "Valid", "Total Gas Limit", "Max Cost (Wei)", "Paymaster"]);
+                let mut t = ui::table(&[
+                    "Sender",
+                    "Valid",
+                    "Total Gas Limit",
+                    "Max Cost (Wei)",
+                    "Paymaster",
+                ]);
                 for r in results {
                     t.add_row(vec![
                         r.sender.to_string(),
                         if r.valid { "VALID" } else { "INVALID" }.into(),
                         r.total_gas_limit.to_string(),
                         r.max_possible_cost.to_string(),
-                        r.paymaster_address.map(|a| a.to_string()).unwrap_or_else(|| "Self".into()),
+                        r.paymaster_address
+                            .map(|a| a.to_string())
+                            .unwrap_or_else(|| "Self".into()),
                     ]);
                 }
                 println!("{t}");
@@ -822,15 +961,25 @@ pub fn handle_query(_ws: &Workspace, args: cli::QueryArgs) -> Result<()> {
     if args.csv {
         println!("{}", res.columns.join(","));
         for row in res.rows {
-            let row_strs: Vec<String> = row.iter().map(|v| v.to_string().trim_matches('"').to_string()).collect();
+            let row_strs: Vec<String> = row
+                .iter()
+                .map(|v| v.to_string().trim_matches('"').to_string())
+                .collect();
             println!("{}", row_strs.join(","));
         }
         return Ok(());
     }
-    ui::header(format!("Analytical Query Execution ({} rows, {} ms)", res.row_count, res.duration_ms));
+    ui::header(format!(
+        "Analytical Query Execution ({} rows, {} ms)",
+        res.row_count, res.duration_ms
+    ));
     let mut t = ui::table(&res.columns.iter().map(|s| s.as_str()).collect::<Vec<_>>());
     for row in res.rows {
-        t.add_row(row.iter().map(|v| v.to_string().trim_matches('"').to_string()).collect::<Vec<_>>());
+        t.add_row(
+            row.iter()
+                .map(|v| v.to_string().trim_matches('"').to_string())
+                .collect::<Vec<_>>(),
+        );
     }
     println!("{t}");
     Ok(())
@@ -838,9 +987,17 @@ pub fn handle_query(_ws: &Workspace, args: cli::QueryArgs) -> Result<()> {
 
 pub fn handle_mev(_ws: &Workspace, args: cli::MevArgs) -> Result<()> {
     match args.action {
-        cli::MevSubcommand::Run { strategy, rpc, dry_run } => {
+        cli::MevSubcommand::Run {
+            strategy,
+            rpc,
+            dry_run,
+        } => {
             ui::header(format!("Running MEV Strategy `{}`", strategy.display()));
-            let rep = mev::run_strategy(&strategy, rpc.as_deref().unwrap_or("ws://127.0.0.1:8545"), dry_run)?;
+            let rep = mev::run_strategy(
+                &strategy,
+                rpc.as_deref().unwrap_or("ws://127.0.0.1:8545"),
+                dry_run,
+            )?;
             ui::kv("Strategy", rep.strategy);
             ui::kv("Mempool Txs Monitored", rep.mempool_txs_processed);
             ui::kv("Opportunities Detected", rep.opportunities_identified);
@@ -850,8 +1007,14 @@ pub fn handle_mev(_ws: &Workspace, args: cli::MevArgs) -> Result<()> {
                 println!("  - {n}");
             }
         }
-        cli::MevSubcommand::Backtest { strategy, start_block, end_block } => {
-            ui::header(format!("Backtesting MEV Strategy across blocks {start_block}..{end_block}"));
+        cli::MevSubcommand::Backtest {
+            strategy,
+            start_block,
+            end_block,
+        } => {
+            ui::header(format!(
+                "Backtesting MEV Strategy across blocks {start_block}..{end_block}"
+            ));
             let rep = mev::backtest_strategy(&strategy, start_block, end_block)?;
             ui::kv("Strategy", rep.strategy);
             ui::kv("Blocks Simulated", rep.blocks_monitored);
@@ -865,7 +1028,10 @@ pub fn handle_mev(_ws: &Workspace, args: cli::MevArgs) -> Result<()> {
 }
 
 pub fn handle_sim(_ws: &Workspace, args: cli::SimArgs) -> Result<()> {
-    ui::header(format!("Agent-Based Market Dynamic Simulation ({} steps)", args.steps));
+    ui::header(format!(
+        "Agent-Based Market Dynamic Simulation ({} steps)",
+        args.steps
+    ));
     let cfg = sim::SimMarketConfig {
         steps: args.steps,
         initial_price: args.initial_price,
@@ -876,8 +1042,14 @@ pub fn handle_sim(_ws: &Workspace, args: cli::SimArgs) -> Result<()> {
     let res = sim::run_simulation(&cfg)?;
     ui::kv("Total Simulated Steps", res.total_steps);
     ui::kv("Total Swaps Executed", res.total_swaps);
-    ui::kv("Total MEV Extracted", format!("${:.2}", res.total_mev_extracted_usd));
-    ui::kv("Final AMM Pool Price", format!("${:.2}", res.pool_price_final));
+    ui::kv(
+        "Total MEV Extracted",
+        format!("${:.2}", res.total_mev_extracted_usd),
+    );
+    ui::kv(
+        "Final AMM Pool Price",
+        format!("${:.2}", res.pool_price_final),
+    );
     ui::header("Searcher Agent PnL Breakdown");
     let mut t = ui::table(&["Agent Name", "Extracted MEV (USD)"]);
     for (name, pnl) in res.searcher_pnl {
@@ -889,9 +1061,18 @@ pub fn handle_sim(_ws: &Workspace, args: cli::SimArgs) -> Result<()> {
 
 pub fn handle_zk(_ws: &Workspace, args: cli::ZkArgs) -> Result<()> {
     match args.action {
-        cli::ZkSubcommand::Prove { path, path_flag, json } => {
-            let target_dir = path.or(path_flag).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
-            ui::header(format!("Compiling and Proving zkVM Program in {}", target_dir.display()));
+        cli::ZkSubcommand::Prove {
+            path,
+            path_flag,
+            json,
+        } => {
+            let target_dir = path
+                .or(path_flag)
+                .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+            ui::header(format!(
+                "Compiling and Proving zkVM Program in {}",
+                target_dir.display()
+            ));
             let rep = zk::prove_zk_project(&target_dir)?;
             if json {
                 println!("{}", serde_json::to_string_pretty(&rep)?);
@@ -904,7 +1085,10 @@ pub fn handle_zk(_ws: &Workspace, args: cli::ZkArgs) -> Result<()> {
             ui::kv("Compile Time", format!("{} ms", rep.compile_duration_ms));
             ui::kv("Proving Time", format!("{} ms", rep.proving_duration_ms));
             ui::kv("Public Values", rep.public_values_hex);
-            ui::kv("Verification Status", if rep.is_valid { "VALID" } else { "INVALID" });
+            ui::kv(
+                "Verification Status",
+                if rep.is_valid { "VALID" } else { "INVALID" },
+            );
         }
     }
     Ok(())
@@ -917,12 +1101,21 @@ pub fn handle_flow(_ws: &Workspace, args: cli::FlowArgs) -> Result<()> {
         return Ok(());
     }
 
-    ui::header(format!("Forensic Fund Flow & Risk Dossier for {}", args.address));
-    ui::kv("Overall Risk Level", format!("{}", graph.overall_risk_level));
+    ui::header(format!(
+        "Forensic Fund Flow & Risk Dossier for {}",
+        args.address
+    ));
+    ui::kv(
+        "Overall Risk Level",
+        format!("{}", graph.overall_risk_level),
+    );
     ui::kv("Risk Score (0-100)", graph.overall_risk_score);
     ui::kv("Graph Traversal Hops", graph.max_hops);
     ui::kv("Total Entities Tracked", graph.total_entities);
-    ui::kv("Mixer Exposure", format!("{:.1}%", graph.dossier.direct_exposure_to_mixer_pct));
+    ui::kv(
+        "Mixer Exposure",
+        format!("{:.1}%", graph.dossier.direct_exposure_to_mixer_pct),
+    );
 
     ui::header("Summary Findings & Sanctions Alerts");
     for f in &graph.summary_findings {
@@ -930,11 +1123,23 @@ pub fn handle_flow(_ws: &Workspace, args: cli::FlowArgs) -> Result<()> {
     }
 
     ui::header("Multi-Hop Entity Flow Graph");
-    let mut t = ui::table(&["Hop", "Source", "Target", "Transfer Amount", "Token", "Target Classification", "Risk Rating"]);
+    let mut t = ui::table(&[
+        "Hop",
+        "Source",
+        "Target",
+        "Transfer Amount",
+        "Token",
+        "Target Classification",
+        "Risk Rating",
+    ]);
     for e in &graph.edges {
         let node = graph.nodes.iter().find(|n| n.id == e.target);
         let (label, cat, risk) = match node {
-            Some(n) => (n.label.as_str(), format!("{}", n.entity_type), format!("{}", n.risk)),
+            Some(n) => (
+                n.label.as_str(),
+                format!("{}", n.entity_type),
+                format!("{}", n.risk),
+            ),
             None => ("Unknown", "Unknown".into(), "Unknown".into()),
         };
         t.add_row(vec![
@@ -952,10 +1157,16 @@ pub fn handle_flow(_ws: &Workspace, args: cli::FlowArgs) -> Result<()> {
     if let Some(csv_path) = args.export_csv {
         let mut csv = String::from("hop,source,target,value_eth,token,tx_hash\n");
         for e in &graph.edges {
-            csv.push_str(&format!("{},{},{},{},{},{}\n", e.hop, e.source, e.target, e.value_eth, e.token, e.tx_hash));
+            csv.push_str(&format!(
+                "{},{},{},{},{},{}\n",
+                e.hop, e.source, e.target, e.value_eth, e.token, e.tx_hash
+            ));
         }
         std::fs::write(&csv_path, csv)?;
-        ui::ok(format!("Exported forensic graph edges to {}", csv_path.display()));
+        ui::ok(format!(
+            "Exported forensic graph edges to {}",
+            csv_path.display()
+        ));
     }
 
     Ok(())
@@ -974,7 +1185,14 @@ pub fn handle_storage(_ws: &Workspace, args: cli::StorageArgs) -> Result<()> {
             return Ok(());
         }
 
-        ui::kv("Upgrade Status", if rep.is_safe_to_upgrade { "SAFE TO UPGRADE (Append-Only Compatible)" } else { "CRITICAL COLLISION HAZARD" });
+        ui::kv(
+            "Upgrade Status",
+            if rep.is_safe_to_upgrade {
+                "SAFE TO UPGRADE (Append-Only Compatible)"
+            } else {
+                "CRITICAL COLLISION HAZARD"
+            },
+        );
         ui::kv("Detected Collisions", rep.collisions.len());
         ui::kv("V1 Total Slots", rep.layout_v1.total_slots_used);
         ui::kv("V2 Total Slots", rep.layout_v2.total_slots_used);
@@ -983,17 +1201,43 @@ pub fn handle_storage(_ws: &Workspace, args: cli::StorageArgs) -> Result<()> {
             ui::fail("Storage Collisions Found:");
             for c in &rep.collisions {
                 match c {
-                    storage::CollisionKind::SlotShift { slot, var_v1, var_v2, details } => {
-                        println!("  - [SLOT SHIFT] Slot {slot}: `{var_v1}` replaced by `{var_v2}` ({details})");
+                    storage::CollisionKind::SlotShift {
+                        slot,
+                        var_v1,
+                        var_v2,
+                        details,
+                    } => {
+                        println!(
+                            "  - [SLOT SHIFT] Slot {slot}: `{var_v1}` replaced by `{var_v2}` ({details})"
+                        );
                     }
-                    storage::CollisionKind::TypeMutation { slot, var, type_v1, type_v2 } => {
-                        println!("  - [TYPE MUTATION] Slot {slot} `{var}`: type changed from `{type_v1}` to `{type_v2}`");
+                    storage::CollisionKind::TypeMutation {
+                        slot,
+                        var,
+                        type_v1,
+                        type_v2,
+                    } => {
+                        println!(
+                            "  - [TYPE MUTATION] Slot {slot} `{var}`: type changed from `{type_v1}` to `{type_v2}`"
+                        );
                     }
-                    storage::CollisionKind::VariableRemoved { slot, var_v1, details } => {
-                        println!("  - [VARIABLE REMOVED] Slot {slot}: `{var_v1}` removed ({details})");
+                    storage::CollisionKind::VariableRemoved {
+                        slot,
+                        var_v1,
+                        details,
+                    } => {
+                        println!(
+                            "  - [VARIABLE REMOVED] Slot {slot}: `{var_v1}` removed ({details})"
+                        );
                     }
-                    storage::CollisionKind::ProxyReservedCollision { slot, standard, conflicting_var } => {
-                        println!("  - [PROXY COLLISION] Slot {slot} ({standard}): conflicts with variable `{conflicting_var}`");
+                    storage::CollisionKind::ProxyReservedCollision {
+                        slot,
+                        standard,
+                        conflicting_var,
+                    } => {
+                        println!(
+                            "  - [PROXY COLLISION] Slot {slot} ({standard}): conflicts with variable `{conflicting_var}`"
+                        );
                     }
                 }
             }
@@ -1004,7 +1248,10 @@ pub fn handle_storage(_ws: &Workspace, args: cli::StorageArgs) -> Result<()> {
             println!("  - {r}");
         }
     } else {
-        ui::header(format!("Storage Slot Layout: {}", args.contract_a.display()));
+        ui::header(format!(
+            "Storage Slot Layout: {}",
+            args.contract_a.display()
+        ));
         let layout = storage::inspect_storage(&args.contract_a)?;
         if args.json {
             println!("{}", serde_json::to_string_pretty(&layout)?);
@@ -1031,7 +1278,10 @@ pub fn handle_storage(_ws: &Workspace, args: cli::StorageArgs) -> Result<()> {
 }
 
 pub fn handle_copilot(_ws: &Workspace, args: cli::CopilotArgs) -> Result<()> {
-    ui::header(format!("Automated Vulnerability Diagnosis & PoC Synthesizer on {}", args.target.display()));
+    ui::header(format!(
+        "Automated Vulnerability Diagnosis & PoC Synthesizer on {}",
+        args.target.display()
+    ));
     let rep = copilot::analyze_contract(&args.target)?;
     if args.json {
         println!("{}", serde_json::to_string_pretty(&rep)?);
@@ -1043,7 +1293,12 @@ pub fn handle_copilot(_ws: &Workspace, args: cli::CopilotArgs) -> Result<()> {
     ui::kv("Critical Severity", rep.critical_count);
 
     for (idx, f) in rep.findings.iter().enumerate() {
-        ui::header(format!("Finding #{}: {} [{}]", idx + 1, f.title, f.severity));
+        ui::header(format!(
+            "Finding #{}: {} [{}]",
+            idx + 1,
+            f.title,
+            f.severity
+        ));
         ui::kv("Class", format!("{}", f.vulnerability_class));
         println!("\n  Diagnosis:\n    {}", f.diagnosis);
         println!("\n  Attack Vector Steps:");
@@ -1059,13 +1314,19 @@ pub fn handle_copilot(_ws: &Workspace, args: cli::CopilotArgs) -> Result<()> {
 
     if let Some(out_path) = args.out {
         std::fs::write(&out_path, &rep.synthesized_poc_harness)?;
-        ui::ok(format!("Exported synthesized PoC test contract to {}", out_path.display()));
+        ui::ok(format!(
+            "Exported synthesized PoC test contract to {}",
+            out_path.display()
+        ));
     }
     Ok(())
 }
 
 pub fn handle_bench(_ws: &Workspace, args: cli::BenchArgs) -> Result<()> {
-    ui::header(format!("Cross-Compiler Differential Benchmark on {}", args.target.display()));
+    ui::header(format!(
+        "Cross-Compiler Differential Benchmark on {}",
+        args.target.display()
+    ));
     let rep = bench::run_benchmark(&args.target)?;
     if args.json {
         println!("{}", serde_json::to_string_pretty(&rep)?);
@@ -1073,23 +1334,46 @@ pub fn handle_bench(_ws: &Workspace, args: cli::BenchArgs) -> Result<()> {
     }
 
     ui::kv("Contract", rep.contract_name);
-    ui::kv("Bytecode Size Reduction", format!("{:.1}% ({} bytes saved)", rep.bytecode_size_reduction_pct, -rep.bytecode_size_delta_bytes));
-    ui::kv("Average Runtime Gas Savings", format!("{:.2}% per call", rep.average_gas_savings_pct));
-    ui::kv("Compile Time Overhead", format!("{:+ } ms", rep.compile_time_overhead_ms));
+    ui::kv(
+        "Bytecode Size Reduction",
+        format!(
+            "{:.1}% ({} bytes saved)",
+            rep.bytecode_size_reduction_pct, -rep.bytecode_size_delta_bytes
+        ),
+    );
+    ui::kv(
+        "Average Runtime Gas Savings",
+        format!("{:.2}% per call", rep.average_gas_savings_pct),
+    );
+    ui::kv(
+        "Compile Time Overhead",
+        format!("{:+ } ms", rep.compile_time_overhead_ms),
+    );
 
     ui::header("Pipeline Performance Comparison Matrix");
-    let mut t = ui::table(&["Metric", "Standard Pipeline", "Aggressive Optimizer (via-ir)", "Delta"]);
+    let mut t = ui::table(&[
+        "Metric",
+        "Standard Pipeline",
+        "Aggressive Optimizer (via-ir)",
+        "Delta",
+    ]);
     t.add_row(vec![
         "Bytecode Size".into(),
         format!("{} bytes", rep.baseline.bytecode_size_bytes),
         format!("{} bytes", rep.optimized.bytecode_size_bytes),
-        format!("{} bytes ({:.1}%)", rep.bytecode_size_delta_bytes, -rep.bytecode_size_reduction_pct),
+        format!(
+            "{} bytes ({:.1}%)",
+            rep.bytecode_size_delta_bytes, -rep.bytecode_size_reduction_pct
+        ),
     ]);
     t.add_row(vec![
         "Deployment Gas".into(),
         rep.baseline.deployment_gas.to_string(),
         rep.optimized.deployment_gas.to_string(),
-        format!("-{} gas", rep.baseline.deployment_gas - rep.optimized.deployment_gas),
+        format!(
+            "-{} gas",
+            rep.baseline.deployment_gas - rep.optimized.deployment_gas
+        ),
     ]);
     t.add_row(vec![
         "Compilation Time".into(),
@@ -1103,7 +1387,11 @@ pub fn handle_bench(_ws: &Workspace, args: cli::BenchArgs) -> Result<()> {
                 format!("Gas: {func}"),
                 base_gas.to_string(),
                 opt_gas.to_string(),
-                format!("-{} ({:.1}%)", base_gas - opt_gas, ((*base_gas - *opt_gas) as f64) / (*base_gas as f64) * 100.0),
+                format!(
+                    "-{} ({:.1}%)",
+                    base_gas - opt_gas,
+                    ((*base_gas - *opt_gas) as f64) / (*base_gas as f64) * 100.0
+                ),
             ]);
         }
     }
@@ -1162,7 +1450,10 @@ pub fn handle_new(ws: &Workspace, args: cli::NewArgs) -> Result<()> {
                 None => std::env::current_dir()?.join(&name),
             };
             zk::scaffold_zk_project(&target, &name)?;
-            ui::ok(format!("Scaffolded high-performance zkVM project at {}", target.display()));
+            ui::ok(format!(
+                "Scaffolded high-performance zkVM project at {}",
+                target.display()
+            ));
         }
     }
     Ok(())

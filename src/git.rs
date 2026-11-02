@@ -1,8 +1,8 @@
 //! Git plumbing: status, upstream remote management, and the sync engine that keeps your
 //! `local_branch` up to date with `upstream/branch` (rebase / merge / ff) without losing work.
 
-use crate::workspace::{Repo, Workspace};
 pub use crate::workspace::Strategy;
+use crate::workspace::{Repo, Workspace};
 use anyhow::{Context, Result, bail};
 use serde::Serialize;
 use std::path::Path;
@@ -18,7 +18,11 @@ pub fn git(dir: &Path, args: &[&str]) -> Result<String> {
         .output()
         .context("failed to run git (is it installed?)")?;
     if !out.status.success() {
-        bail!("git {}: {}", args.join(" "), String::from_utf8_lossy(&out.stderr).trim());
+        bail!(
+            "git {}: {}",
+            args.join(" "),
+            String::from_utf8_lossy(&out.stderr).trim()
+        );
     }
     Ok(String::from_utf8_lossy(&out.stdout).trim_end().to_string())
 }
@@ -28,11 +32,19 @@ fn git_ok(dir: &Path, args: &[&str]) -> bool {
 }
 
 fn rev(dir: &Path, r: &str) -> Option<String> {
-    git(dir, &["rev-parse", "--verify", "-q", &format!("{r}^{{commit}}")]).ok().filter(|s| !s.is_empty())
+    git(
+        dir,
+        &["rev-parse", "--verify", "-q", &format!("{r}^{{commit}}")],
+    )
+    .ok()
+    .filter(|s| !s.is_empty())
 }
 
 fn count(dir: &Path, range: &str) -> usize {
-    git(dir, &["rev-list", "--count", range]).ok().and_then(|s| s.parse().ok()).unwrap_or(0)
+    git(dir, &["rev-list", "--count", range])
+        .ok()
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(0)
 }
 
 fn short(s: &str) -> String {
@@ -95,7 +107,8 @@ pub fn status(ws: &Workspace, repo: &Repo) -> RepoStatus {
     st.remote_ok = git(&dir, &["remote", "get-url", &repo.remote])
         .map(|u| same_url(&u, &repo.upstream))
         .unwrap_or(false);
-    st.current_branch = git(&dir, &["symbolic-ref", "--short", "-q", "HEAD"]).unwrap_or_else(|_| "(detached)".into());
+    st.current_branch = git(&dir, &["symbolic-ref", "--short", "-q", "HEAD"])
+        .unwrap_or_else(|_| "(detached)".into());
     if let Ok(line) = git(&dir, &["log", "-1", "--format=%h%x00%s%x00%cr"]) {
         let mut parts = line.split('\0');
         st.head = parts.next().unwrap_or_default().into();
@@ -111,10 +124,13 @@ pub fn status(ws: &Workspace, repo: &Repo) -> RepoStatus {
         st.behind = count(&dir, &format!("{}..{up}", repo.local_branch()));
     }
     let fh = dir.join(".git").join("FETCH_HEAD");
-    st.last_fetch = std::fs::metadata(fh).and_then(|m| m.modified()).ok().map(|t| {
-        let dt: chrono::DateTime<chrono::Local> = t.into();
-        dt.format("%Y-%m-%d %H:%M").to_string()
-    });
+    st.last_fetch = std::fs::metadata(fh)
+        .and_then(|m| m.modified())
+        .ok()
+        .map(|t| {
+            let dt: chrono::DateTime<chrono::Local> = t.into();
+            dt.format("%Y-%m-%d %H:%M").to_string()
+        });
     st
 }
 
@@ -124,17 +140,24 @@ fn upstream_ref_for(dir: &Path, repo: &Repo) -> Option<String> {
     if rev(dir, &primary).is_some() {
         return Some(primary);
     }
-    let origin_is_upstream =
-        git(dir, &["remote", "get-url", "origin"]).map(|u| same_url(&u, &repo.upstream)).unwrap_or(false);
+    let origin_is_upstream = git(dir, &["remote", "get-url", "origin"])
+        .map(|u| same_url(&u, &repo.upstream))
+        .unwrap_or(false);
     let alt = format!("origin/{}", repo.branch);
     (origin_is_upstream && rev(dir, &alt).is_some()).then_some(alt)
 }
 
 pub fn same_url(a: &str, b: &str) -> bool {
     fn norm(u: &str) -> String {
-        let u = u.trim().trim_end_matches('/').trim_end_matches(".git").to_lowercase();
+        let u = u
+            .trim()
+            .trim_end_matches('/')
+            .trim_end_matches(".git")
+            .to_lowercase();
         let u = u.replace("git@github.com:", "github.com/");
-        u.trim_start_matches("https://").trim_start_matches("ssh://git@").to_string()
+        u.trim_start_matches("https://")
+            .trim_start_matches("ssh://git@")
+            .to_string()
     }
     norm(a) == norm(b)
 }
@@ -151,11 +174,17 @@ pub fn ensure_remote(dir: &Path, repo: &Repo) -> Result<Option<String>> {
         Ok(url) if same_url(&url, &repo.upstream) => Ok(None),
         Ok(url) => {
             git(dir, &["remote", "set-url", &repo.remote, &repo.upstream])?;
-            Ok(Some(format!("remote `{}` repointed {url} → {}", repo.remote, repo.upstream)))
+            Ok(Some(format!(
+                "remote `{}` repointed {url} → {}",
+                repo.remote, repo.upstream
+            )))
         }
         Err(_) => {
             git(dir, &["remote", "add", &repo.remote, &repo.upstream])?;
-            Ok(Some(format!("added remote `{}` → {}", repo.remote, repo.upstream)))
+            Ok(Some(format!(
+                "added remote `{}` → {}",
+                repo.remote, repo.upstream
+            )))
         }
     }
 }
@@ -166,7 +195,15 @@ pub fn clone(ws: &Workspace, repo: &Repo) -> Result<()> {
         bail!("{} already exists", dir.display());
     }
     let status = Command::new("git")
-        .args(["clone", "--filter=blob:none", "-o", &repo.remote, "-b", &repo.branch, &repo.upstream])
+        .args([
+            "clone",
+            "--filter=blob:none",
+            "-o",
+            &repo.remote,
+            "-b",
+            &repo.branch,
+            &repo.upstream,
+        ])
         .arg(&dir)
         .env("GIT_TERMINAL_PROMPT", "0")
         .status()?;
@@ -174,13 +211,25 @@ pub fn clone(ws: &Workspace, repo: &Repo) -> Result<()> {
         bail!("git clone {} failed", repo.upstream);
     }
     if repo.local_branch() != repo.branch {
-        git(&dir, &["checkout", "-b", repo.local_branch(), "--track", &repo.upstream_ref()])?;
+        git(
+            &dir,
+            &[
+                "checkout",
+                "-b",
+                repo.local_branch(),
+                "--track",
+                &repo.upstream_ref(),
+            ],
+        )?;
     }
     Ok(())
 }
 
 pub fn fetch(dir: &Path, repo: &Repo) -> Result<()> {
-    let refspec = format!("+refs/heads/{0}:refs/remotes/{1}/{0}", repo.branch, repo.remote);
+    let refspec = format!(
+        "+refs/heads/{0}:refs/remotes/{1}/{0}",
+        repo.branch, repo.remote
+    );
     git(dir, &["fetch", "--quiet", &repo.remote, &refspec])?;
     Ok(())
 }
@@ -270,11 +319,13 @@ fn sync_inner(ws: &Workspace, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport
     let Some(local_sha) = rev(&dir, &local) else {
         if opts.dry_run {
             rep.outcome = Outcome::WouldUpdate;
-            rep.notes.push(format!("would create branch {local} from {up_ref}"));
+            rep.notes
+                .push(format!("would create branch {local} from {up_ref}"));
             return Ok(());
         }
         git(&dir, &["branch", "--track", &local, &up_ref])?;
-        rep.notes.push(format!("created branch {local} tracking {up_ref}"));
+        rep.notes
+            .push(format!("created branch {local} tracking {up_ref}"));
         rep.outcome = Outcome::Updated;
         rep.to = short(&up_sha);
         return Ok(());
@@ -303,7 +354,15 @@ fn sync_inner(ws: &Workspace, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport
 
     // Fast path: local branch has no patches and is not checked out → move the ref, no checkout.
     if fast_forwardable && current != local {
-        git(&dir, &["update-ref", &format!("refs/heads/{local}"), &up_sha, &local_sha])?;
+        git(
+            &dir,
+            &[
+                "update-ref",
+                &format!("refs/heads/{local}"),
+                &up_sha,
+                &local_sha,
+            ],
+        )?;
         rep.outcome = Outcome::Updated;
         rep.to = short(&up_sha);
         maybe_push(&dir, repo, opts, rep)?;
@@ -350,16 +409,24 @@ fn sync_inner(ws: &Workspace, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport
             rep.to = head(&dir).map(|h| short(&h)).unwrap_or_default();
         }
         Err(e) => {
-            let conflicts = git(&dir, &["diff", "--name-only", "--diff-filter=U"]).unwrap_or_default();
+            let conflicts =
+                git(&dir, &["diff", "--name-only", "--diff-filter=U"]).unwrap_or_default();
             let _ = git(&dir, &["rebase", "--abort"]);
             let _ = git(&dir, &["merge", "--abort"]);
             rep.outcome = Outcome::Conflict;
             rep.to = rep.from.clone();
-            rep.notes.push(format!("{strategy} aborted, branch left unchanged: {e}"));
+            rep.notes
+                .push(format!("{strategy} aborted, branch left unchanged: {e}"));
             if !conflicts.is_empty() {
-                rep.notes.push(format!("conflicting files: {}", conflicts.lines().collect::<Vec<_>>().join(", ")));
+                rep.notes.push(format!(
+                    "conflicting files: {}",
+                    conflicts.lines().collect::<Vec<_>>().join(", ")
+                ));
             }
-            rep.notes.push(format!("resolve manually: cd {} && git checkout {local} && git {strategy} {up_ref}", dir.display()));
+            rep.notes.push(format!(
+                "resolve manually: cd {} && git checkout {local} && git {strategy} {up_ref}",
+                dir.display()
+            ));
         }
     }
 
@@ -370,7 +437,8 @@ fn sync_inner(ws: &Workspace, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport
         if git_ok(&dir, &["stash", "pop", "--quiet"]) {
             rep.notes.push("restored stashed changes".into());
         } else {
-            rep.notes.push("could not auto-restore stash; run `git stash pop` manually".into());
+            rep.notes
+                .push("could not auto-restore stash; run `git stash pop` manually".into());
         }
     }
     if rep.outcome == Outcome::Updated {
@@ -384,7 +452,9 @@ fn maybe_push(dir: &Path, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport) ->
     if repo.name != "rusty-chain-kit" {
         return Ok(());
     }
-    let Some(fork) = &repo.fork else { return Ok(()) };
+    let Some(fork) = &repo.fork else {
+        return Ok(());
+    };
     if !(repo.push || opts.push) {
         return Ok(());
     }
@@ -398,7 +468,16 @@ fn maybe_push(dir: &Path, repo: &Repo, opts: &SyncOpts, rep: &mut SyncReport) ->
         }
     }
     let local = repo.local_branch();
-    match git(dir, &["push", "--quiet", "--force-with-lease", "fork", &format!("{local}:{local}")]) {
+    match git(
+        dir,
+        &[
+            "push",
+            "--quiet",
+            "--force-with-lease",
+            "fork",
+            &format!("{local}:{local}"),
+        ],
+    ) {
         Ok(_) => rep.notes.push(format!("pushed {local} → fork")),
         Err(e) => rep.notes.push(format!("push to fork failed: {e}")),
     }

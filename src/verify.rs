@@ -44,7 +44,10 @@ pub struct FuzzReport {
 }
 
 /// Run symbolic execution to mathematically prove invariants using an SMT solver (Z3).
-pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Result<VerificationReport> {
+pub fn verify_contract(
+    target_path: &Path,
+    invariant_name: Option<&str>,
+) -> Result<VerificationReport> {
     let start = std::time::Instant::now();
     let target_str = target_path.display().to_string();
 
@@ -66,7 +69,9 @@ pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Resu
         if let Some(idx) = trimmed.find("function ") {
             let after_fn = &trimmed[idx + 9..].trim();
             if let Some(name) = after_fn.split('(').next().map(|s| s.trim()) {
-                if (name.starts_with("invariant") || name.starts_with("prove")) && !invariants.contains(&name.to_string()) {
+                if (name.starts_with("invariant") || name.starts_with("prove"))
+                    && !invariants.contains(&name.to_string())
+                {
                     invariants.push(name.to_string());
                 }
             }
@@ -83,7 +88,10 @@ pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Resu
     }
 
     let inv_count = invariants.len();
-    notes.push(format!("extracted {} formal invariant(s) for symbolic exploration", inv_count));
+    notes.push(format!(
+        "extracted {} formal invariant(s) for symbolic exploration",
+        inv_count
+    ));
 
     // Construct SMT-LIB2 formula for path constraint exploration
     let smt_script = format!(
@@ -122,7 +130,10 @@ pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Resu
             }
         }
     } else {
-        notes.push("Z3 solver binary not detected; executed embedded symbolic constraint propagation".into());
+        notes.push(
+            "Z3 solver binary not detected; executed embedded symbolic constraint propagation"
+                .into(),
+        );
         (VerificationStatus::Proved, None)
     };
 
@@ -140,7 +151,11 @@ pub fn verify_contract(target_path: &Path, invariant_name: Option<&str>) -> Resu
 }
 
 /// Run stateful snapshot fuzzing against contract invariants.
-pub fn fuzz_contract(target_path: &Path, iterations: usize, _seed: Option<u64>) -> Result<FuzzReport> {
+pub fn fuzz_contract(
+    target_path: &Path,
+    iterations: usize,
+    _seed: Option<u64>,
+) -> Result<FuzzReport> {
     let start = std::time::Instant::now();
     let target_str = target_path.display().to_string();
 

@@ -72,8 +72,12 @@ pub fn analyze_contract(target_path_or_source: &Path) -> Result<CopilotReport> {
     let mut findings = Vec::new();
 
     // 1. Detect Reentrancy pattern (external call before state variable write)
-    if (content.contains(".call{value:") || content.contains(".transfer(") || content.contains(".send("))
-        && (content.contains("balances[") || content.contains("totalAssets") || content.contains("shares["))
+    if (content.contains(".call{value:")
+        || content.contains(".transfer(")
+        || content.contains(".send("))
+        && (content.contains("balances[")
+            || content.contains("totalAssets")
+            || content.contains("shares["))
     {
         findings.push(ExploitFinding {
             title: "State Update After External Call (Reentrancy Vulnerability)".into(),

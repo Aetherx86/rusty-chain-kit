@@ -18,7 +18,12 @@ pub struct SimPool {
 
 impl SimPool {
     pub fn new(address: Address, reserve0: f64, reserve1: f64, fee_bps: u16) -> Self {
-        Self { address, reserve0, reserve1, fee_bps }
+        Self {
+            address,
+            reserve0,
+            reserve1,
+            fee_bps,
+        }
     }
 
     pub fn spot_price(&self) -> f64 {
@@ -100,11 +105,16 @@ pub fn run_simulation(config: &SimMarketConfig) -> Result<SimResult> {
     ];
 
     let mut notes = vec![];
-    notes.push(format!("initialized AMM pool with spot price: ${:.2}", pool.spot_price()));
+    notes.push(format!(
+        "initialized AMM pool with spot price: ${:.2}",
+        pool.spot_price()
+    ));
 
     for step in 0..config.steps {
         // Geometric Brownian Motion step for external CEX reference price
-        let shock = ((step as f64 * 0.13).sin() * config.volatility).max(-0.05).min(0.05);
+        let shock = ((step as f64 * 0.13).sin() * config.volatility)
+            .max(-0.05)
+            .min(0.05);
         current_reference_price *= 1.0 + shock;
 
         // Retail trader swap
@@ -127,7 +137,10 @@ pub fn run_simulation(config: &SimMarketConfig) -> Result<SimResult> {
         }
     }
 
-    notes.push(format!("simulation completed across {} blocks", config.steps));
+    notes.push(format!(
+        "simulation completed across {} blocks",
+        config.steps
+    ));
     notes.push(format!("total swaps simulated: {}", total_swaps));
     notes.push(format!("final pool price: ${:.2}", pool.spot_price()));
 

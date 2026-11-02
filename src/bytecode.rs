@@ -85,7 +85,11 @@ pub fn extract_abi(bytecode: &[u8]) -> Vec<DiscoveredFunction> {
                 .to_string();
             let signature = f.arguments.map(|args| {
                 let arg_strs: Vec<String> = args.iter().map(|a| a.to_string()).collect();
-                format!("function_{}({})", alloy::hex::encode(f.selector), arg_strs.join(","))
+                format!(
+                    "function_{}({})",
+                    alloy::hex::encode(f.selector),
+                    arg_strs.join(",")
+                )
             });
             DiscoveredFunction {
                 selector: sel_hex,
@@ -98,10 +102,7 @@ pub fn extract_abi(bytecode: &[u8]) -> Vec<DiscoveredFunction> {
 }
 
 /// Detect proxy patterns and extract implementation addresses.
-pub fn detect_proxy(
-    bytecode: &[u8],
-    storage_slots: &BTreeMap<B256, B256>,
-) -> ProxyReport {
+pub fn detect_proxy(bytecode: &[u8], storage_slots: &BTreeMap<B256, B256>) -> ProxyReport {
     // 1. Check for EIP-7702 delegation designation: 0xef0100 + 20-byte address
     if bytecode.len() >= 23 && &bytecode[..3] == [0xef, 0x01, 0x00] {
         let mut addr_bytes = [0u8; 20];
@@ -122,7 +123,9 @@ pub fn detect_proxy(
     // Target address: 20 bytes
     // Suffix: 5af43d82803e903d91602b57fd5bf3 (15 bytes)
     let eip1167_prefix = [0x36, 0x3d, 0x3d, 0x37, 0x3d, 0x3d, 0x3d, 0x36, 0x3d, 0x73];
-    let eip1167_suffix = [0x5a, 0xf4, 0x3d, 0x82, 0x80, 0x3e, 0x90, 0x3d, 0x91, 0x60, 0x2b, 0x57, 0xfd, 0x5b, 0xf3];
+    let eip1167_suffix = [
+        0x5a, 0xf4, 0x3d, 0x82, 0x80, 0x3e, 0x90, 0x3d, 0x91, 0x60, 0x2b, 0x57, 0xfd, 0x5b, 0xf3,
+    ];
     if bytecode.len() >= 45 && bytecode.starts_with(&eip1167_prefix) {
         if bytecode.len() >= 10 + 20 + eip1167_suffix.len() && &bytecode[30..45] == eip1167_suffix {
             let mut addr_bytes = [0u8; 20];
@@ -143,37 +146,33 @@ pub fn detect_proxy(
     // Implementation: bytes32(uint256(keccak256('eip1967.proxy.implementation')) - 1)
     // = 0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc
     let eip1967_impl_slot = B256::from([
-        0x36, 0x08, 0x94, 0xa1, 0x3b, 0xa1, 0xa3, 0x21,
-        0x06, 0x67, 0xc8, 0x28, 0x49, 0x2d, 0xb9, 0x8d,
-        0xca, 0x3e, 0x20, 0x76, 0xcc, 0x37, 0x35, 0xa9,
-        0x20, 0xa3, 0xca, 0x50, 0x5d, 0x38, 0x2b, 0xbc,
+        0x36, 0x08, 0x94, 0xa1, 0x3b, 0xa1, 0xa3, 0x21, 0x06, 0x67, 0xc8, 0x28, 0x49, 0x2d, 0xb9,
+        0x8d, 0xca, 0x3e, 0x20, 0x76, 0xcc, 0x37, 0x35, 0xa9, 0x20, 0xa3, 0xca, 0x50, 0x5d, 0x38,
+        0x2b, 0xbc,
     ]);
 
     // Admin slot: bytes32(uint256(keccak256('eip1967.proxy.admin')) - 1)
     // = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103
     let eip1967_admin_slot = B256::from([
-        0xb5, 0x31, 0x27, 0x68, 0x4a, 0x56, 0x8b, 0x31,
-        0x73, 0xae, 0x13, 0xb9, 0xf8, 0xa6, 0x01, 0x6e,
-        0x24, 0x3e, 0x63, 0xb6, 0xe8, 0xee, 0x11, 0x78,
-        0xd6, 0xa7, 0x17, 0x85, 0x0b, 0x5d, 0x61, 0x03,
+        0xb5, 0x31, 0x27, 0x68, 0x4a, 0x56, 0x8b, 0x31, 0x73, 0xae, 0x13, 0xb9, 0xf8, 0xa6, 0x01,
+        0x6e, 0x24, 0x3e, 0x63, 0xb6, 0xe8, 0xee, 0x11, 0x78, 0xd6, 0xa7, 0x17, 0x85, 0x0b, 0x5d,
+        0x61, 0x03,
     ]);
 
     // Beacon slot: bytes32(uint256(keccak256('eip1967.proxy.beacon')) - 1)
     // = 0xa3f0ad74e5423aeb0d704ffc64609906c7479486c4f068c8e8d35e4e76672533
     let eip1967_beacon_slot = B256::from([
-        0xa3, 0xf0, 0xad, 0x74, 0xe5, 0x42, 0x3a, 0xeb,
-        0x0d, 0x70, 0x4f, 0xfc, 0x64, 0x60, 0x99, 0x06,
-        0xc7, 0x47, 0x94, 0x86, 0xc4, 0xf0, 0x68, 0xc8,
-        0xe8, 0xd3, 0x5e, 0x4e, 0x76, 0x67, 0x25, 0x33,
+        0xa3, 0xf0, 0xad, 0x74, 0xe5, 0x42, 0x3a, 0xeb, 0x0d, 0x70, 0x4f, 0xfc, 0x64, 0x60, 0x99,
+        0x06, 0xc7, 0x47, 0x94, 0x86, 0xc4, 0xf0, 0x68, 0xc8, 0xe8, 0xd3, 0x5e, 0x4e, 0x76, 0x67,
+        0x25, 0x33,
     ]);
 
     // EIP-1822 UUPS slot: keccak256("PROXIABLE")
     // = 0xc5f1683661476463973577941dff679028e00797356972a1a842459d290ba49c
     let eip1822_slot = B256::from([
-        0xc5, 0xf1, 0x68, 0x36, 0x61, 0x47, 0x64, 0x63,
-        0x97, 0x35, 0x77, 0x94, 0x1d, 0xff, 0x67, 0x90,
-        0x28, 0xe0, 0x07, 0x97, 0x35, 0x69, 0x72, 0xa1,
-        0xa8, 0x42, 0x45, 0x9d, 0x29, 0x0b, 0xa4, 0x9c,
+        0xc5, 0xf1, 0x68, 0x36, 0x61, 0x47, 0x64, 0x63, 0x97, 0x35, 0x77, 0x94, 0x1d, 0xff, 0x67,
+        0x90, 0x28, 0xe0, 0x07, 0x97, 0x35, 0x69, 0x72, 0xa1, 0xa8, 0x42, 0x45, 0x9d, 0x29, 0x0b,
+        0xa4, 0x9c,
     ]);
 
     let extract_addr = |slot: &B256| -> Option<Address> {
@@ -269,7 +268,10 @@ pub fn lift_cfg(bytecode: &[u8]) -> ControlFlowGraph {
             let push_size = (op - 0x60 + 1) as usize;
             let end = (pc + 1 + push_size).min(bytecode.len());
             let push_data = &bytecode[pc + 1..end];
-            instructions.push((op_pc, format!("PUSH{} 0x{}", push_size, alloy::hex::encode(push_data))));
+            instructions.push((
+                op_pc,
+                format!("PUSH{} 0x{}", push_size, alloy::hex::encode(push_data)),
+            ));
             pc += 1 + push_size;
         } else {
             let op_name = opcode_name(op);
@@ -293,7 +295,10 @@ pub fn lift_cfg(bytecode: &[u8]) -> ControlFlowGraph {
         current_block_instructions.push(format!("0x{:04x}: {}", inst_pc, inst_str));
 
         let is_jump = inst_str.starts_with("JUMP") || inst_str.starts_with("JUMPI");
-        let is_term = matches!(inst_str.as_str(), "STOP" | "RETURN" | "REVERT" | "INVALID" | "SELFDESTRUCT");
+        let is_term = matches!(
+            inst_str.as_str(),
+            "STOP" | "RETURN" | "REVERT" | "INVALID" | "SELFDESTRUCT"
+        );
 
         let next_is_jumpdest = if i + 1 < instructions.len() {
             jumpdests.contains(&instructions[i + 1].0)
@@ -310,7 +315,11 @@ pub fn lift_cfg(bytecode: &[u8]) -> ControlFlowGraph {
                 start_pc: current_block_start,
                 end_pc: *inst_pc,
                 instructions: std::mem::take(&mut current_block_instructions),
-                successors: if is_term { vec![] } else { vec![current_block_id + 1] },
+                successors: if is_term {
+                    vec![]
+                } else {
+                    vec![current_block_id + 1]
+                },
                 is_terminal: is_term,
             });
             current_block_id += 1;

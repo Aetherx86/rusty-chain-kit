@@ -51,13 +51,20 @@ pub struct MevRunReport {
 
 /// Run an MEV strategy against live mempool stream or simulated feed.
 pub fn run_strategy(strategy_path: &Path, rpc_url: &str, dry_run: bool) -> Result<MevRunReport> {
-    let strat_name = strategy_path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "default_strategy".into());
+    let strat_name = strategy_path
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "default_strategy".into());
     let mut notes = vec![];
-    notes.push(format!("initializing MEV strategy pipeline for `{strat_name}`"));
+    notes.push(format!(
+        "initializing MEV strategy pipeline for `{strat_name}`"
+    ));
     notes.push(format!("subscribing to mempool events via {rpc_url}"));
 
     if dry_run {
-        notes.push("dry-run mode active: bundles will be simulated locally, zero network broadcast".into());
+        notes.push(
+            "dry-run mode active: bundles will be simulated locally, zero network broadcast".into(),
+        );
     }
 
     Ok(MevRunReport {
@@ -72,12 +79,19 @@ pub fn run_strategy(strategy_path: &Path, rpc_url: &str, dry_run: bool) -> Resul
 }
 
 /// Backtest an MEV strategy over a historical block range.
-pub fn backtest_strategy(strategy_path: &Path, start_block: u64, end_block: u64) -> Result<MevRunReport> {
+pub fn backtest_strategy(
+    strategy_path: &Path,
+    start_block: u64,
+    end_block: u64,
+) -> Result<MevRunReport> {
     if end_block < start_block {
         bail!("end block ({end_block}) cannot be less than start block ({start_block})");
     }
     let total_blocks = end_block - start_block + 1;
-    let strat_name = strategy_path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_else(|| "backtest".into());
+    let strat_name = strategy_path
+        .file_stem()
+        .map(|s| s.to_string_lossy().to_string())
+        .unwrap_or_else(|| "backtest".into());
 
     Ok(MevRunReport {
         strategy: strat_name,

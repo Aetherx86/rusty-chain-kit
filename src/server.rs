@@ -105,7 +105,12 @@ async fn static_handler(uri: axum::http::Uri) -> impl IntoResponse {
 // ───────────────────────────── Repo Handlers ─────────────────────────────
 
 async fn api_get_repos(State(s): State<AppState>) -> Json<Value> {
-    let repos: Vec<_> = s.ws.manifest.repos.iter().map(|r| git::status(&s.ws, r)).collect();
+    let repos: Vec<_> =
+        s.ws.manifest
+            .repos
+            .iter()
+            .map(|r| git::status(&s.ws, r))
+            .collect();
     Json(json!({ "repos": repos }))
 }
 
@@ -122,7 +127,10 @@ struct UpdateAllRequest {
     strategy: Option<String>,
 }
 
-async fn api_update_all_repos(State(s): State<AppState>, Json(req): Json<UpdateAllRequest>) -> Json<Value> {
+async fn api_update_all_repos(
+    State(s): State<AppState>,
+    Json(req): Json<UpdateAllRequest>,
+) -> Json<Value> {
     let script = s.ws.root.join("update-all.sh");
     if !script.exists() {
         return Json(json!({ "success": false, "error": "update-all.sh not found" }));
@@ -141,7 +149,11 @@ async fn api_update_all_repos(State(s): State<AppState>, Json(req): Json<UpdateA
 
     match cmd.output() {
         Ok(out) => {
-            let combined = format!("{}\n{}", String::from_utf8_lossy(&out.stdout), String::from_utf8_lossy(&out.stderr));
+            let combined = format!(
+                "{}\n{}",
+                String::from_utf8_lossy(&out.stdout),
+                String::from_utf8_lossy(&out.stderr)
+            );
             Json(json!({ "success": out.status.success(), "output": combined }))
         }
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -165,7 +177,10 @@ async fn api_sync_repos(State(s): State<AppState>, Json(req): Json<SyncRequest>)
         push: false,
     };
 
-    let reports: Vec<_> = repos_to_sync.into_iter().map(|r| git::sync(&s.ws, r, &opts)).collect();
+    let reports: Vec<_> = repos_to_sync
+        .into_iter()
+        .map(|r| git::sync(&s.ws, r, &opts))
+        .collect();
     Json(json!({ "reports": reports }))
 }
 
@@ -251,7 +266,9 @@ async fn api_get_tx(State(s): State<AppState>, Query(q): Query<TxQuery>) -> Json
     };
 
     match chain::tx(&rpc.url, &q.hash).await {
-        Ok((summary, tx, receipt)) => Json(json!({ "summary": summary, "tx": tx, "receipt": receipt })),
+        Ok((summary, tx, receipt)) => {
+            Json(json!({ "summary": summary, "tx": tx, "receipt": receipt }))
+        }
         Err(e) => Json(json!({ "error": e.to_string() })),
     }
 }
@@ -293,7 +310,10 @@ struct StartDevnetRequest {
     block_time: Option<u64>,
 }
 
-async fn api_start_devnet(State(s): State<AppState>, Json(req): Json<StartDevnetRequest>) -> Json<Value> {
+async fn api_start_devnet(
+    State(s): State<AppState>,
+    Json(req): Json<StartDevnetRequest>,
+) -> Json<Value> {
     let kind = req.kind.as_deref().unwrap_or("devnet");
     match kind {
         "devnet" | "anvil" => {
@@ -328,7 +348,10 @@ struct StopDevnetRequest {
     kind: Option<String>,
 }
 
-async fn api_stop_devnet(State(s): State<AppState>, Json(req): Json<StopDevnetRequest>) -> Json<Value> {
+async fn api_stop_devnet(
+    State(s): State<AppState>,
+    Json(req): Json<StopDevnetRequest>,
+) -> Json<Value> {
     let kind = match req.kind.as_deref().unwrap_or("devnet") {
         "node" | "reth" => services::Kind::Node,
         _ => services::Kind::Devnet,
@@ -368,7 +391,10 @@ struct CompileRequest {
     compiler: Option<String>,
 }
 
-async fn api_workflow_compile(State(s): State<AppState>, Json(req): Json<CompileRequest>) -> Json<Value> {
+async fn api_workflow_compile(
+    State(s): State<AppState>,
+    Json(req): Json<CompileRequest>,
+) -> Json<Value> {
     let tmp_dir = s.ws.data_dir().join("tmp_compile");
     let _ = std::fs::create_dir_all(&tmp_dir);
     let file_path = tmp_dir.join("Contract.sol");
@@ -389,7 +415,10 @@ struct DecompileRequest {
     rpc: Option<String>,
 }
 
-async fn api_workflow_decompile(State(s): State<AppState>, Json(req): Json<DecompileRequest>) -> Json<Value> {
+async fn api_workflow_decompile(
+    State(s): State<AppState>,
+    Json(req): Json<DecompileRequest>,
+) -> Json<Value> {
     match workflows::decompile(&s.ws, req.rpc.as_deref(), &req.target).await {
         Ok(res) => Json(json!({ "result": res })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -402,7 +431,10 @@ struct ScaffoldRequest {
     name: String,
 }
 
-async fn api_workflow_scaffold(State(s): State<AppState>, Json(req): Json<ScaffoldRequest>) -> Json<Value> {
+async fn api_workflow_scaffold(
+    State(s): State<AppState>,
+    Json(req): Json<ScaffoldRequest>,
+) -> Json<Value> {
     let res = match req.kind.as_str() {
         "bot" => crate::scaffold::new_bot(&s.ws, &req.name, None),
         "script" => crate::scaffold::new_script(&s.ws, &req.name, None),
@@ -424,8 +456,13 @@ struct ForensicsQuery {
     hops: Option<usize>,
 }
 
-async fn api_get_forensics_flow(State(_s): State<AppState>, Query(q): Query<ForensicsQuery>) -> Json<Value> {
-    let subject = q.address.unwrap_or_else(|| "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045".into());
+async fn api_get_forensics_flow(
+    State(_s): State<AppState>,
+    Query(q): Query<ForensicsQuery>,
+) -> Json<Value> {
+    let subject = q
+        .address
+        .unwrap_or_else(|| "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045".into());
     let hops = q.hops.unwrap_or(2);
     match crate::forensics::trace_flow(&subject, hops) {
         Ok(graph) => Json(serde_json::to_value(&graph).unwrap_or_default()),
@@ -443,10 +480,19 @@ struct StorageInspectRequest {
     source: Option<String>,
 }
 
-async fn api_storage_inspect(State(_s): State<AppState>, Json(req): Json<StorageInspectRequest>) -> Json<Value> {
-    let target = req.contract_a.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+async fn api_storage_inspect(
+    State(_s): State<AppState>,
+    Json(req): Json<StorageInspectRequest>,
+) -> Json<Value> {
+    let target = req
+        .contract_a
+        .or(req.source)
+        .unwrap_or_else(|| "contracts/Vault.sol".into());
     if let Some(b) = req.contract_b {
-        match crate::storage::compare_layouts(std::path::Path::new(&target), std::path::Path::new(&b)) {
+        match crate::storage::compare_layouts(
+            std::path::Path::new(&target),
+            std::path::Path::new(&b),
+        ) {
             Ok(rep) => Json(json!({ "success": true, "report": rep })),
             Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
         }
@@ -466,8 +512,14 @@ struct CopilotRequest {
     source: Option<String>,
 }
 
-async fn api_copilot_explain(State(_s): State<AppState>, Json(req): Json<CopilotRequest>) -> Json<Value> {
-    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+async fn api_copilot_explain(
+    State(_s): State<AppState>,
+    Json(req): Json<CopilotRequest>,
+) -> Json<Value> {
+    let target = req
+        .target
+        .or(req.source)
+        .unwrap_or_else(|| "contracts/Vault.sol".into());
     match crate::copilot::analyze_contract(std::path::Path::new(&target)) {
         Ok(rep) => Json(json!({ "success": true, "report": rep })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -483,7 +535,10 @@ struct BenchRequest {
 }
 
 async fn api_bench_run(State(_s): State<AppState>, Json(req): Json<BenchRequest>) -> Json<Value> {
-    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+    let target = req
+        .target
+        .or(req.source)
+        .unwrap_or_else(|| "contracts/Vault.sol".into());
     match crate::bench::run_benchmark(std::path::Path::new(&target)) {
         Ok(rep) => Json(json!({ "success": true, "report": rep })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -495,7 +550,10 @@ struct BytecodeInspectRequest {
     bytecode: String,
 }
 
-async fn api_bytecode_inspect(State(_s): State<AppState>, Json(req): Json<BytecodeInspectRequest>) -> Json<Value> {
+async fn api_bytecode_inspect(
+    State(_s): State<AppState>,
+    Json(req): Json<BytecodeInspectRequest>,
+) -> Json<Value> {
     let clean = req.bytecode.trim().trim_start_matches("0x");
     let bytes = match alloy::hex::decode(clean) {
         Ok(b) => b,
@@ -522,8 +580,14 @@ struct VerifyProveRequest {
     invariant: Option<String>,
 }
 
-async fn api_verify_prove(State(_s): State<AppState>, Json(req): Json<VerifyProveRequest>) -> Json<Value> {
-    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+async fn api_verify_prove(
+    State(_s): State<AppState>,
+    Json(req): Json<VerifyProveRequest>,
+) -> Json<Value> {
+    let target = req
+        .target
+        .or(req.source)
+        .unwrap_or_else(|| "contracts/Vault.sol".into());
     let path = std::path::Path::new(&target);
     match crate::verify::verify_contract(path, req.invariant.as_deref()) {
         Ok(rep) => Json(json!({ "success": true, "report": rep })),
@@ -540,8 +604,14 @@ struct VerifyFuzzRequest {
     runs: Option<usize>,
 }
 
-async fn api_verify_fuzz(State(_s): State<AppState>, Json(req): Json<VerifyFuzzRequest>) -> Json<Value> {
-    let target = req.target.or(req.source).unwrap_or_else(|| "contracts/Vault.sol".into());
+async fn api_verify_fuzz(
+    State(_s): State<AppState>,
+    Json(req): Json<VerifyFuzzRequest>,
+) -> Json<Value> {
+    let target = req
+        .target
+        .or(req.source)
+        .unwrap_or_else(|| "contracts/Vault.sol".into());
     let path = std::path::Path::new(&target);
     let runs = req.runs.unwrap_or(5000);
     match crate::verify::fuzz_contract(path, runs, None) {
@@ -555,7 +625,10 @@ struct ReplEvalRequest {
     expr: String,
 }
 
-async fn api_repl_eval(State(_s): State<AppState>, Json(req): Json<ReplEvalRequest>) -> Json<Value> {
+async fn api_repl_eval(
+    State(_s): State<AppState>,
+    Json(req): Json<ReplEvalRequest>,
+) -> Json<Value> {
     match crate::repl::evaluate_expression(&req.expr) {
         Ok(res) => Json(json!({ "success": true, "result": res })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),
@@ -588,7 +661,10 @@ struct AnalyticsQueryRequest {
     sql: String,
 }
 
-async fn api_analytics_query(State(s): State<AppState>, Json(req): Json<AnalyticsQueryRequest>) -> Json<Value> {
+async fn api_analytics_query(
+    State(s): State<AppState>,
+    Json(req): Json<AnalyticsQueryRequest>,
+) -> Json<Value> {
     match crate::analytics::execute_query(&req.sql, Some(&s.ws.data_dir())) {
         Ok(res) => Json(json!({ "success": true, "result": res })),
         Err(e) => Json(json!({ "success": false, "error": e.to_string() })),

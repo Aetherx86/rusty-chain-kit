@@ -216,9 +216,7 @@ pub enum ReposSubcommand {
         push: bool,
     },
     /// Fetch latest commits from upstream remotes without modifying working trees
-    Fetch {
-        repos: Vec<String>,
-    },
+    Fetch { repos: Vec<String> },
 }
 
 // ───────────────────────────── Build ─────────────────────────────
@@ -271,22 +269,13 @@ pub enum RpcSubcommand {
     /// List all available RPC endpoints from config, MESC, and running services
     List,
     /// Resolve an alias or MESC query to its full URL
-    Resolve {
-        query: String,
-    },
+    Resolve { query: String },
     /// Get or set the default RPC endpoint
-    Default {
-        name: Option<String>,
-    },
+    Default { name: Option<String> },
     /// Add a custom RPC endpoint alias
-    Add {
-        name: String,
-        url: String,
-    },
+    Add { name: String, url: String },
     /// Remove an RPC endpoint alias
-    Remove {
-        name: String,
-    },
+    Remove { name: String },
     /// Perform trustless Merkle-Patricia Trie proof validation against state root
     Trustless {
         address: String,
@@ -391,9 +380,7 @@ pub enum ChainSubcommand {
     /// Display chain summary (chain ID, block, gas price, client version)
     Info,
     /// Inspect block details by number, hash, or 'latest'
-    Block {
-        id: Option<String>,
-    },
+    Block { id: Option<String> },
     /// Inspect transaction details, status, and receipt
     Tx {
         hash: String,
@@ -715,25 +702,13 @@ pub struct NewArgs {
 #[derive(Subcommand)]
 pub enum NewKind {
     /// Scaffold an Artemis-style MEV bot (powered by Alloy)
-    Bot {
-        name: String,
-        out: Option<PathBuf>,
-    },
+    Bot { name: String, out: Option<PathBuf> },
     /// Scaffold a modern Viem TypeScript script
-    Script {
-        name: String,
-        out: Option<PathBuf>,
-    },
+    Script { name: String, out: Option<PathBuf> },
     /// Scaffold a Solidity contract project with Foundry and Solar
-    Contract {
-        name: String,
-        out: Option<PathBuf>,
-    },
+    Contract { name: String, out: Option<PathBuf> },
     /// Scaffold a high-performance RISC-V zkVM project
-    Zk {
-        name: String,
-        out: Option<PathBuf>,
-    },
+    Zk { name: String, out: Option<PathBuf> },
 }
 
 #[derive(Args)]

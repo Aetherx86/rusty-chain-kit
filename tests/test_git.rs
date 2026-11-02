@@ -1,4 +1,4 @@
-use rusty_chain_kit::git::{same_url, status, sync, Outcome, SyncOpts, SyncReport};
+use rusty_chain_kit::git::{Outcome, SyncOpts, SyncReport, same_url, status, sync};
 use rusty_chain_kit::workspace::{Repo, Strategy, Workspace};
 use std::path::Path;
 
@@ -172,7 +172,10 @@ fn test_sync_dry_run_does_not_modify() {
     let rep = sync(&ws, foundry, &opts);
     assert_eq!(rep.name, "foundry");
     // Under dry_run, either UpToDate or WouldUpdate is produced, or Error if offline/network lock
-    assert!(matches!(rep.outcome, Outcome::UpToDate | Outcome::WouldUpdate | Outcome::Error));
+    assert!(matches!(
+        rep.outcome,
+        Outcome::UpToDate | Outcome::WouldUpdate | Outcome::Error
+    ));
 }
 
 #[test]
@@ -220,7 +223,7 @@ fn test_push_isolation_guard() {
     // External repos must NEVER be allowed to push, even if push = true is passed
     let ws = Workspace::discover().unwrap();
     let foundry = ws.repo("foundry").unwrap();
-    
+
     let mut custom_foundry = foundry.clone();
     custom_foundry.fork = Some("https://github.com/fake/foundry.git".into());
     custom_foundry.push = true;

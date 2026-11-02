@@ -101,7 +101,11 @@ pub fn run_benchmark(target_path_or_source: &Path) -> Result<BenchmarkComparison
             count += 1;
         }
     }
-    let avg_gas_savings = if count > 0 { total_savings_pct / (count as f64) } else { 0.0 };
+    let avg_gas_savings = if count > 0 {
+        total_savings_pct / (count as f64)
+    } else {
+        0.0
+    };
 
     let mut notes = Vec::new();
     notes.push(format!(
@@ -115,14 +119,17 @@ pub fn run_benchmark(target_path_or_source: &Path) -> Result<BenchmarkComparison
     notes.push(format!(
         "Deployment cost reduced by {} gas ({:.1}%)",
         baseline.deployment_gas - optimized.deployment_gas,
-        ((baseline.deployment_gas - optimized.deployment_gas) as f64) / (baseline.deployment_gas as f64) * 100.0
+        ((baseline.deployment_gas - optimized.deployment_gas) as f64)
+            / (baseline.deployment_gas as f64)
+            * 100.0
     ));
     notes.push(format!(
         "Compilation trade-off: via-ir pipeline requires +{}ms build time overhead",
         optimized.compile_duration_ms - baseline.compile_duration_ms
     ));
 
-    let compile_time_overhead_ms = (optimized.compile_duration_ms as i64) - (baseline.compile_duration_ms as i64);
+    let compile_time_overhead_ms =
+        (optimized.compile_duration_ms as i64) - (baseline.compile_duration_ms as i64);
 
     Ok(BenchmarkComparisonReport {
         contract_name,

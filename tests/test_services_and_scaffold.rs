@@ -1,5 +1,5 @@
 use rusty_chain_kit::scaffold::{new_bot, new_contract, new_script};
-use rusty_chain_kit::services::{alive, log_file, DevnetOpts, Kind, NodeOpts, ServiceState};
+use rusty_chain_kit::services::{DevnetOpts, Kind, NodeOpts, ServiceState, alive, log_file};
 use rusty_chain_kit::tools;
 use rusty_chain_kit::workflows::{AuditReport, CompileResult};
 use rusty_chain_kit::workspace::Workspace;

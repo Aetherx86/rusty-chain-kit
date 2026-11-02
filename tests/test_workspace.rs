@@ -12,7 +12,7 @@ fn test_workspace_discovery() {
 fn test_manifest_repos_count_and_categories() {
     let ws = Workspace::discover().unwrap();
     let repo_names: Vec<&str> = ws.manifest.repos.iter().map(|r| r.name.as_str()).collect();
-    
+
     // All 11 repos must be present
     assert!(repo_names.contains(&"foundry"));
     assert!(repo_names.contains(&"solar"));
@@ -32,7 +32,10 @@ fn test_manifest_repos_count_and_categories() {
 fn test_manifest_repos_canonical_upstreams() {
     let ws = Workspace::discover().unwrap();
     let foundry = ws.repo("foundry").expect("foundry must exist");
-    assert_eq!(foundry.upstream, "https://github.com/foundry-rs/foundry.git");
+    assert_eq!(
+        foundry.upstream,
+        "https://github.com/foundry-rs/foundry.git"
+    );
     assert_eq!(foundry.branch, "master");
 
     let solar = ws.repo("solar").expect("solar must exist");
@@ -45,7 +48,7 @@ fn test_manifest_repos_canonical_upstreams() {
 #[test]
 fn test_workspace_select_repos() {
     let ws = Workspace::discover().unwrap();
-    
+
     // Select specific repos
     let selected = ws.select(&["foundry".into(), "solar".into()]).unwrap();
     assert_eq!(selected.len(), 2);
@@ -64,28 +67,58 @@ fn test_workspace_select_repos() {
 #[test]
 fn test_workspace_bin_mappings() {
     let ws = Workspace::discover().unwrap();
-    
-    let forge_repo = ws.repo_for_bin("forge").expect("forge binary mapping missing");
+
+    let forge_repo = ws
+        .repo_for_bin("forge")
+        .expect("forge binary mapping missing");
     assert_eq!(forge_repo.name, "foundry");
 
-    let solar_repo = ws.repo_for_bin("solar").expect("solar binary mapping missing");
+    let solar_repo = ws
+        .repo_for_bin("solar")
+        .expect("solar binary mapping missing");
     assert_eq!(solar_repo.name, "solar");
 
-    let cryo_repo = ws.repo_for_bin("cryo").expect("cryo binary mapping missing");
+    let cryo_repo = ws
+        .repo_for_bin("cryo")
+        .expect("cryo binary mapping missing");
     assert_eq!(cryo_repo.name, "cryo");
 
-    let mesc_repo = ws.repo_for_bin("mesc").expect("mesc binary mapping missing");
+    let mesc_repo = ws
+        .repo_for_bin("mesc")
+        .expect("mesc binary mapping missing");
     assert_eq!(mesc_repo.name, "mesc");
 
-    let heimdall_repo = ws.repo_for_bin("heimdall").expect("heimdall binary mapping missing");
+    let heimdall_repo = ws
+        .repo_for_bin("heimdall")
+        .expect("heimdall binary mapping missing");
     assert_eq!(heimdall_repo.name, "heimdall");
 
     let all_bins = ws.all_bins();
-    assert!(all_bins.iter().any(|(bin, repo)| bin == "forge" && repo == "foundry"));
-    assert!(all_bins.iter().any(|(bin, repo)| bin == "cast" && repo == "foundry"));
-    assert!(all_bins.iter().any(|(bin, repo)| bin == "anvil" && repo == "foundry"));
-    assert!(all_bins.iter().any(|(bin, repo)| bin == "chisel" && repo == "foundry"));
-    assert!(all_bins.iter().any(|(bin, repo)| bin == "solar" && repo == "solar"));
+    assert!(
+        all_bins
+            .iter()
+            .any(|(bin, repo)| bin == "forge" && repo == "foundry")
+    );
+    assert!(
+        all_bins
+            .iter()
+            .any(|(bin, repo)| bin == "cast" && repo == "foundry")
+    );
+    assert!(
+        all_bins
+            .iter()
+            .any(|(bin, repo)| bin == "anvil" && repo == "foundry")
+    );
+    assert!(
+        all_bins
+            .iter()
+            .any(|(bin, repo)| bin == "chisel" && repo == "foundry")
+    );
+    assert!(
+        all_bins
+            .iter()
+            .any(|(bin, repo)| bin == "solar" && repo == "solar")
+    );
 }
 
 #[test]
@@ -158,7 +191,9 @@ fn test_workspace_config_serialization() {
 
     let mut cfg = Config::default();
     cfg.rpc.default = Some("sepolia".into());
-    cfg.rpc.endpoints.insert("custom_net".into(), "https://custom.rpc".into());
+    cfg.rpc
+        .endpoints
+        .insert("custom_net".into(), "https://custom.rpc".into());
 
     let toml_str = toml::to_string_pretty(&cfg).unwrap();
     std::fs::write(&config_path, toml_str).unwrap();
@@ -167,7 +202,10 @@ fn test_workspace_config_serialization() {
     let loaded: Config = toml::from_str(&loaded_str).unwrap();
 
     assert_eq!(loaded.rpc.default, Some("sepolia".into()));
-    assert_eq!(loaded.rpc.endpoints.get("custom_net").unwrap(), "https://custom.rpc");
+    assert_eq!(
+        loaded.rpc.endpoints.get("custom_net").unwrap(),
+        "https://custom.rpc"
+    );
 }
 
 #[test]
