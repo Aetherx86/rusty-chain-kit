@@ -1,5 +1,13 @@
+# Copyright (c) 2026 Jeong Hoon Kim. All rights reserved.
+.git
+.github
+.gitlab-ci.yml
+.env
+*.env
 target/
-.git/
-.para/
-.cargo/advisory-db/
-*.log
+node_modules/
+dist/
+build/
+*.pyc
+__pycache__/
+.DS_Store
