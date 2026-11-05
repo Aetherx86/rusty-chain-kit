@@ -351,18 +351,10 @@ pub struct SyncRecord {
 
 // ───────────────────────────── user config ─────────────────────────────
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     #[serde(default)]
     pub rpc: RpcConfig,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            rpc: RpcConfig::default(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -64,16 +64,15 @@ pub fn verify_contract(
 
     // Discover invariant methods (invariant_*, prove_*, test_*)
     let mut invariants = vec![];
-    for part in target_content.split(|c: char| c == ';' || c == '{' || c == '}' || c == '\n') {
+    for part in target_content.split([';', '{', '}', '\n']) {
         let trimmed = part.trim();
         if let Some(idx) = trimmed.find("function ") {
             let after_fn = &trimmed[idx + 9..].trim();
-            if let Some(name) = after_fn.split('(').next().map(|s| s.trim()) {
-                if (name.starts_with("invariant") || name.starts_with("prove"))
-                    && !invariants.contains(&name.to_string())
-                {
-                    invariants.push(name.to_string());
-                }
+            if let Some(name) = after_fn.split('(').next().map(|s| s.trim())
+                && (name.starts_with("invariant") || name.starts_with("prove"))
+                && !invariants.contains(&name.to_string())
+            {
+                invariants.push(name.to_string());
             }
         }
     }

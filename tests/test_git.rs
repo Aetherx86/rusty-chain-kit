@@ -99,32 +99,32 @@ fn test_status_for_temporary_git_repo() {
     let init_out = std::process::Command::new("git")
         .arg("-C")
         .arg(path)
-        .args(&["init", "-b", "main"])
+        .args(["init", "-b", "main"])
         .output();
     if init_out.is_ok() {
         std::process::Command::new("git")
             .arg("-C")
             .arg(path)
-            .args(&["config", "user.email", "ci@example.com"])
+            .args(["config", "user.email", "ci@example.com"])
             .output()
             .ok();
         std::process::Command::new("git")
             .arg("-C")
             .arg(path)
-            .args(&["config", "user.name", "CI Runner"])
+            .args(["config", "user.name", "CI Runner"])
             .output()
             .ok();
         std::fs::write(path.join("README.md"), "test").unwrap();
         std::process::Command::new("git")
             .arg("-C")
             .arg(path)
-            .args(&["add", "."])
+            .args(["add", "."])
             .output()
             .ok();
         std::process::Command::new("git")
             .arg("-C")
             .arg(path)
-            .args(&["commit", "-m", "init"])
+            .args(["commit", "-m", "init"])
             .output()
             .ok();
 

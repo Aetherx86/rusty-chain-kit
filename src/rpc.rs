@@ -60,15 +60,15 @@ pub fn list(ws: &Workspace) -> Vec<Endpoint> {
         })
         .collect();
     out.extend(builtins(ws));
-    if mesc::is_mesc_enabled() {
-        if let Ok(eps) = mesc::find_endpoints(Default::default()) {
-            out.extend(eps.into_iter().map(|e| Endpoint {
-                chain_id: e.chain_id.as_ref().map(|c| c.to_string()),
-                name: e.name,
-                url: e.url,
-                source: "mesc".into(),
-            }));
-        }
+    if mesc::is_mesc_enabled()
+        && let Ok(eps) = mesc::find_endpoints(Default::default())
+    {
+        out.extend(eps.into_iter().map(|e| Endpoint {
+            chain_id: e.chain_id.as_ref().map(|c| c.to_string()),
+            name: e.name,
+            url: e.url,
+            source: "mesc".into(),
+        }));
     }
     out
 }
@@ -96,13 +96,13 @@ pub fn lookup(ws: &Workspace, q: &str) -> Result<Resolved> {
             via: format!("builtin:{}", e.name),
         });
     }
-    if mesc::is_mesc_enabled() {
-        if let Ok(Some(e)) = mesc::get_endpoint_by_query(q, Some("para")) {
-            return Ok(Resolved {
-                url: e.url,
-                via: format!("mesc:{}", e.name),
-            });
-        }
+    if mesc::is_mesc_enabled()
+        && let Ok(Some(e)) = mesc::get_endpoint_by_query(q, Some("para"))
+    {
+        return Ok(Resolved {
+            url: e.url,
+            via: format!("mesc:{}", e.name),
+        });
     }
     bail!("unknown RPC endpoint `{q}` (see `para rpc list`, or pass a URL)")
 }
@@ -112,29 +112,29 @@ pub fn resolve(ws: &Workspace, explicit: Option<&str>) -> Result<Resolved> {
         return lookup(ws, q);
     }
     for var in ["PARA_RPC", "ETH_RPC_URL"] {
-        if let Ok(v) = std::env::var(var) {
-            if !v.is_empty() {
-                let mut r = lookup(ws, &v)?;
-                r.via = format!("${var} ({})", r.via);
-                return Ok(r);
-            }
+        if let Ok(v) = std::env::var(var)
+            && !v.is_empty()
+        {
+            let mut r = lookup(ws, &v)?;
+            r.via = format!("${var} ({})", r.via);
+            return Ok(r);
         }
     }
-    if let Some(d) = ws.load_config().rpc.default {
-        if let Ok(r) = lookup(ws, &d) {
-            return Ok(Resolved {
-                url: r.url,
-                via: format!("default ({})", r.via),
-            });
-        }
+    if let Some(d) = ws.load_config().rpc.default
+        && let Ok(r) = lookup(ws, &d)
+    {
+        return Ok(Resolved {
+            url: r.url,
+            via: format!("default ({})", r.via),
+        });
     }
-    if mesc::is_mesc_enabled() {
-        if let Ok(Some(e)) = mesc::get_default_endpoint(Some("para")) {
-            return Ok(Resolved {
-                url: e.url,
-                via: format!("mesc default:{}", e.name),
-            });
-        }
+    if mesc::is_mesc_enabled()
+        && let Ok(Some(e)) = mesc::get_default_endpoint(Some("para"))
+    {
+        return Ok(Resolved {
+            url: e.url,
+            via: format!("mesc default:{}", e.name),
+        });
     }
     if let Some(s) = services::status(ws, services::Kind::Devnet) {
         return Ok(Resolved {

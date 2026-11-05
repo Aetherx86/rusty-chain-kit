@@ -100,7 +100,7 @@ pub fn profile_opcodes(struct_logs: &[serde_json::Value]) -> (Vec<OpcodeProfile>
         .collect();
 
     // Sort descending by total gas
-    profiles.sort_by(|a, b| b.total_gas.cmp(&a.total_gas));
+    profiles.sort_by_key(|a| std::cmp::Reverse(a.total_gas));
 
     // Construct Flamegraph tree
     let children: Vec<FlamegraphNode> = profiles

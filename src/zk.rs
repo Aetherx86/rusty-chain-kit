@@ -31,14 +31,13 @@ pub fn scaffold_zk_project(target_dir: &Path, name: &str) -> Result<()> {
     std::fs::create_dir_all(target_dir.join("script/src"))?;
 
     // Root Cargo.toml
-    let root_cargo = format!(
-        "[workspace]\n\
+    let root_cargo = "[workspace]\n\
         members = [\"program\", \"script\"]\n\
         resolver = \"2\"\n\n\
         [workspace.package]\n\
         version = \"0.1.0\"\n\
         edition = \"2024\"\n"
-    );
+        .to_string();
     std::fs::write(target_dir.join("Cargo.toml"), root_cargo)?;
 
     // Guest program Cargo.toml & main.rs

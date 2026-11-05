@@ -46,7 +46,6 @@ jobs:
   rust-workflow:
     name: Rust Quality, Tests & Security Audit
     runs-on: ubuntu-latest
-    if: hashFiles('**/Cargo.toml') != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -100,7 +99,6 @@ jobs:
   docker-workflow:
     name: Docker Lint, Build & Trivy Scan
     runs-on: ubuntu-latest
-    if: hashFiles('**/Dockerfile*') != ''
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

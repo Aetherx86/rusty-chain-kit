@@ -104,7 +104,7 @@ pub fn extract_abi(bytecode: &[u8]) -> Vec<DiscoveredFunction> {
 /// Detect proxy patterns and extract implementation addresses.
 pub fn detect_proxy(bytecode: &[u8], storage_slots: &BTreeMap<B256, B256>) -> ProxyReport {
     // 1. Check for EIP-7702 delegation designation: 0xef0100 + 20-byte address
-    if bytecode.len() >= 23 && &bytecode[..3] == [0xef, 0x01, 0x00] {
+    if bytecode.len() >= 23 && bytecode[..3] == [0xef, 0x01, 0x00] {
         let mut addr_bytes = [0u8; 20];
         addr_bytes.copy_from_slice(&bytecode[3..23]);
         let impl_addr = Address::from(addr_bytes);
@@ -126,20 +126,22 @@ pub fn detect_proxy(bytecode: &[u8], storage_slots: &BTreeMap<B256, B256>) -> Pr
     let eip1167_suffix = [
         0x5a, 0xf4, 0x3d, 0x82, 0x80, 0x3e, 0x90, 0x3d, 0x91, 0x60, 0x2b, 0x57, 0xfd, 0x5b, 0xf3,
     ];
-    if bytecode.len() >= 45 && bytecode.starts_with(&eip1167_prefix) {
-        if bytecode.len() >= 10 + 20 + eip1167_suffix.len() && &bytecode[30..45] == eip1167_suffix {
-            let mut addr_bytes = [0u8; 20];
-            addr_bytes.copy_from_slice(&bytecode[10..30]);
-            let impl_addr = Address::from(addr_bytes);
-            return ProxyReport {
-                is_proxy: true,
-                kind: ProxyKind::Eip1167MinimalClone,
-                implementation: Some(impl_addr),
-                admin: None,
-                beacon: None,
-                details: format!("EIP-1167 minimal proxy clone targeting {impl_addr}"),
-            };
-        }
+    if bytecode.len() >= 45
+        && bytecode.starts_with(&eip1167_prefix)
+        && bytecode.len() >= 10 + 20 + eip1167_suffix.len()
+        && bytecode[30..45] == eip1167_suffix
+    {
+        let mut addr_bytes = [0u8; 20];
+        addr_bytes.copy_from_slice(&bytecode[10..30]);
+        let impl_addr = Address::from(addr_bytes);
+        return ProxyReport {
+            is_proxy: true,
+            kind: ProxyKind::Eip1167MinimalClone,
+            implementation: Some(impl_addr),
+            admin: None,
+            beacon: None,
+            details: format!("EIP-1167 minimal proxy clone targeting {impl_addr}"),
+        };
     }
 
     // 3. Check EIP-1967 Storage Slots:

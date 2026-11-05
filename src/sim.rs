@@ -112,9 +112,7 @@ pub fn run_simulation(config: &SimMarketConfig) -> Result<SimResult> {
 
     for step in 0..config.steps {
         // Geometric Brownian Motion step for external CEX reference price
-        let shock = ((step as f64 * 0.13).sin() * config.volatility)
-            .max(-0.05)
-            .min(0.05);
+        let shock = ((step as f64 * 0.13).sin() * config.volatility).clamp(-0.05, 0.05);
         current_reference_price *= 1.0 + shock;
 
         // Retail trader swap

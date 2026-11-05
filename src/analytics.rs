@@ -94,12 +94,12 @@ fn load_dataset(
             Path::new(table_or_file).to_path_buf()
         };
 
-        if p.exists() && p.extension().map_or(false, |ext| ext == "json") {
+        if p.exists() && p.extension().is_some_and(|ext| ext == "json") {
             let text = std::fs::read_to_string(&p)?;
-            if let Ok(json_val) = serde_json::from_str::<serde_json::Value>(&text) {
-                if let Some(arr) = json_val.as_array() {
-                    return parse_json_rows(arr);
-                }
+            if let Ok(json_val) = serde_json::from_str::<serde_json::Value>(&text)
+                && let Some(arr) = json_val.as_array()
+            {
+                return parse_json_rows(arr);
             }
         }
     }

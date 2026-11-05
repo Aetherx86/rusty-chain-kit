@@ -73,10 +73,11 @@ pub fn get_type_byte_size(type_str: &str) -> usize {
     if t == "address" {
         return 20;
     }
-    if t.starts_with("bytes") && t.len() > 5 {
-        if let Ok(n) = t[5..].parse::<usize>() {
-            return n.min(32);
-        }
+    if t.starts_with("bytes")
+        && t.len() > 5
+        && let Ok(n) = t[5..].parse::<usize>()
+    {
+        return n.min(32);
     }
     if t.starts_with("uint") || t.starts_with("int") {
         let bit_str = t.trim_start_matches("uint").trim_start_matches("int");
@@ -85,7 +86,7 @@ pub fn get_type_byte_size(type_str: &str) -> usize {
         } else {
             bit_str.parse::<usize>().unwrap_or(256)
         };
-        return (bits + 7) / 8;
+        return bits.div_ceil(8);
     }
     // Default struct, mapping, array or uint256 word
     32
@@ -143,7 +144,7 @@ pub fn parse_storage_layout_from_source(
         let decl = trimmed.trim_end_matches(';').trim();
 
         let (type_name, var_name, size) = if decl.starts_with("mapping") {
-            let after_mapping = decl.splitn(2, ')').nth(1).unwrap_or("");
+            let after_mapping = decl.split_once(')').map(|x| x.1).unwrap_or("");
             let var = after_mapping
                 .split_whitespace()
                 .last()

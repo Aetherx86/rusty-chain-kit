@@ -42,17 +42,17 @@ pub fn require(ws: &Workspace, bin: &str) -> Result<PathBuf> {
 }
 
 pub fn version(path: &PathBuf) -> Option<String> {
-    if let Ok(out) = Command::new(path).arg("--version").output() {
-        if out.status.success() {
-            let s = String::from_utf8_lossy(if out.stdout.is_empty() {
-                &out.stderr
-            } else {
-                &out.stdout
-            })
-            .to_string();
-            if let Some(line) = s.lines().find(|l| !l.trim().is_empty()) {
-                return Some(line.trim().to_string());
-            }
+    if let Ok(out) = Command::new(path).arg("--version").output()
+        && out.status.success()
+    {
+        let s = String::from_utf8_lossy(if out.stdout.is_empty() {
+            &out.stderr
+        } else {
+            &out.stdout
+        })
+        .to_string();
+        if let Some(line) = s.lines().find(|l| !l.trim().is_empty()) {
+            return Some(line.trim().to_string());
         }
     }
     if let Ok(out) = Command::new(path).arg("--help").output() {

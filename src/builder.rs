@@ -58,7 +58,7 @@ pub fn build(ws: &Workspace, repo: &Repo, opts: &BuildOpts) -> Result<()> {
     ui::header(format!(
         "building {} @ {}",
         repo.name,
-        &head.chars().take(10).collect::<String>()
+        head.chars().take(10).collect::<String>()
     ));
     let started = std::time::Instant::now();
 

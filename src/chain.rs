@@ -24,9 +24,9 @@ async fn raw(
     method: &'static str,
     params: impl serde::Serialize + Send + Sync + Clone + std::fmt::Debug + std::marker::Unpin + 'static,
 ) -> Result<Value> {
-    Ok(p.raw_request::<_, Value>(method.into(), params)
+    p.raw_request::<_, Value>(method.into(), params)
         .await
-        .with_context(|| method.to_string())?)
+        .with_context(|| method.to_string())
 }
 
 pub fn hex_u64(v: &Value) -> Option<u64> {
