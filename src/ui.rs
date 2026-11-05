@@ -37,16 +37,16 @@ pub fn cyan(s: impl AsRef<str>) -> String {
 }
 
 pub fn header(s: impl AsRef<str>) {
-    println!("{}", bold(cyan(format!("▸ {}", s.as_ref()))));
+    println!("{}", bold(cyan(format!(":: {}", s.as_ref()))));
 }
 pub fn ok(s: impl AsRef<str>) {
-    println!("{} {}", green("✔"), s.as_ref());
+    println!("{} {}", green("[OK]"), s.as_ref());
 }
 pub fn warn(s: impl AsRef<str>) {
-    println!("{} {}", yellow("!"), s.as_ref());
+    println!("{} {}", yellow("[WARN]"), s.as_ref());
 }
 pub fn fail(s: impl AsRef<str>) {
-    println!("{} {}", red("✘"), s.as_ref());
+    println!("{} {}", red("[FAIL]"), s.as_ref());
 }
 pub fn info(s: impl AsRef<str>) {
     println!("{} {}", dim("·"), s.as_ref());

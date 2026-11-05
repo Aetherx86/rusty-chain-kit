@@ -4,7 +4,7 @@ An [artemis](https://github.com/paradigmxyz/artemis)-style MEV/automation bot, p
 [alloy](https://github.com/alloy-rs/alloy). Scaffolded by `para new bot`.
 
 ```
-Collectors ──events──▶ Strategies ──actions──▶ Executors
+Collectors ──events──> Strategies ──actions──> Executors
 (blocks, mempool)      (GasWatch)              (alert, mempool tx)
 ```
 
