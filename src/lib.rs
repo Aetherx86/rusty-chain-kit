@@ -106,15 +106,31 @@ pub async fn run() -> Result<()> {
             server::run_server(ws, g.port, !g.no_open).await?;
         }
         Commands::Visual(v) => {
-            ui::header(format!("Chainalysis-Style Forensics Visual Kit: {}", v.address));
+            ui::header(format!(
+                "Chainalysis-Style Forensics Visual Kit: {}",
+                v.address
+            ));
             let graph = forensics::trace_flow(&v.address, v.hops)?;
             ui::kv("Subject", &graph.subject);
             ui::kv("Attribution", &graph.dossier.label);
-            ui::kv("Overall Risk", format!("{} ({}/100)", graph.overall_risk_level, graph.overall_risk_score));
+            ui::kv(
+                "Overall Risk",
+                format!(
+                    "{} ({}/100)",
+                    graph.overall_risk_level, graph.overall_risk_score
+                ),
+            );
             ui::kv("Counterparties Tracked", graph.total_entities);
             if let Some(ref t) = graph.taint {
                 ui::kv("Direct Mixer Taint", format!("{:.1}%", t.direct_mixer_pct));
-                ui::kv("OFAC SDN Listed", if t.is_sanctioned_sdn { "YES [SDN ALERT]" } else { "NO [CLEAN]" });
+                ui::kv(
+                    "OFAC SDN Listed",
+                    if t.is_sanctioned_sdn {
+                        "YES [SDN ALERT]"
+                    } else {
+                        "NO [CLEAN]"
+                    },
+                );
             }
             let visual_url = format!("http://127.0.0.1:{}/#forensics", v.port);
             ui::ok(format!("Visual Kit live dashboard ready at {}", visual_url));

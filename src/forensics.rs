@@ -405,9 +405,24 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
         flags.push("PEELING_CHAIN_DETECTED".into());
 
         let hop1_lazarus = [
-            ("0xa160cdab225685da1d56aa342ad8841c3b53f291", 2000.0, "ETH", "0x5f81c900eef5a08992147b85f67a213904a8b0df438c4106e64b4a11c00184fa"),
-            ("0x1111111254fb6c44bac0bed2854e76f90643097d", 1500.0, "ETH", "0x8e550992a71f021e84a9c681284b238a0988cc6102aa6412b50c4ed8d0fb90ad"),
-            ("0x6334e12c148bb4402eb74f3299723ecdbf7a557b", 800.0, "ETH", "0x3a77038bbcefa0148b8120eef98284758b29f06a0901e82847b56d9517b9c948"),
+            (
+                "0xa160cdab225685da1d56aa342ad8841c3b53f291",
+                2000.0,
+                "ETH",
+                "0x5f81c900eef5a08992147b85f67a213904a8b0df438c4106e64b4a11c00184fa",
+            ),
+            (
+                "0x1111111254fb6c44bac0bed2854e76f90643097d",
+                1500.0,
+                "ETH",
+                "0x8e550992a71f021e84a9c681284b238a0988cc6102aa6412b50c4ed8d0fb90ad",
+            ),
+            (
+                "0x6334e12c148bb4402eb74f3299723ecdbf7a557b",
+                800.0,
+                "ETH",
+                "0x3a77038bbcefa0148b8120eef98284758b29f06a0901e82847b56d9517b9c948",
+            ),
         ];
 
         for (target_addr, val, token, tx) in hop1_lazarus {
@@ -442,17 +457,33 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
 
         if hops >= 2 {
             let hop2_lazarus = [
-                ("0x1111111254fb6c44bac0bed2854e76f90643097d", "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be", 1480.0, "USDT", "0x9c3309e1a8bb2084c8a90104eec78491823a41b528bb2049e7826b50c4ed8d0f"),
-                ("0x6334e12c148bb4402eb74f3299723ecdbf7a557b", "0xfa7093cdd9ee6932b4eb2c9e1560c53a16a5e2a8", 750.0, "WETH", "0x4b88019ab921c560b4a920eef19208a0988cc6102aa6412b50c4ed8d0fb90ad1"),
+                (
+                    "0x1111111254fb6c44bac0bed2854e76f90643097d",
+                    "0x3f5ce5fbfe3e9af3971dd833d26ba9b5c936f0be",
+                    1480.0,
+                    "USDT",
+                    "0x9c3309e1a8bb2084c8a90104eec78491823a41b528bb2049e7826b50c4ed8d0f",
+                ),
+                (
+                    "0x6334e12c148bb4402eb74f3299723ecdbf7a557b",
+                    "0xfa7093cdd9ee6932b4eb2c9e1560c53a16a5e2a8",
+                    750.0,
+                    "WETH",
+                    "0x4b88019ab921c560b4a920eef19208a0988cc6102aa6412b50c4ed8d0fb90ad1",
+                ),
             ];
             for (src, dst, val, token, tx) in hop2_lazarus {
                 let (cat, label, risk, sanc) = lookup_known_entity(dst);
                 if cat == EntityCategory::Mixer {
                     direct_mixer_exposure += val;
-                    findings.push(format!("Hop 2 Flag: Privacy pool routing ({label}) detected for {val} {token}"));
+                    findings.push(format!(
+                        "Hop 2 Flag: Privacy pool routing ({label}) detected for {val} {token}"
+                    ));
                 } else if cat == EntityCategory::Exchange {
                     cex_exposure_vol += val;
-                    findings.push(format!("Hop 2 Flag: Exchange deposit attempt ({label}) for {val} {token}"));
+                    findings.push(format!(
+                        "Hop 2 Flag: Exchange deposit attempt ({label}) for {val} {token}"
+                    ));
                 }
 
                 nodes.push(ForensicNode {
@@ -628,10 +659,26 @@ pub fn trace_flow(subject_address: &str, max_hops: usize) -> Result<ForensicGrap
 
     let taint = TaintAnalysis {
         direct_mixer_pct: mixer_pct,
-        indirect_taint_pct: if mixer_pct > 0.0 { (mixer_pct * 1.25).min(99.0) } else { 2.4 },
-        cex_exposure_pct: if total_vol_out > 0.0 { (cex_exposure_vol / total_vol_out * 100.0).min(100.0) } else { 0.0 },
-        bridge_exposure_pct: if total_vol_out > 0.0 { (bridge_exposure_vol / total_vol_out * 100.0).min(100.0) } else { 0.0 },
-        dex_exposure_pct: if total_vol_out > 0.0 { (dex_exposure_vol / total_vol_out * 100.0).min(100.0) } else { 0.0 },
+        indirect_taint_pct: if mixer_pct > 0.0 {
+            (mixer_pct * 1.25).min(99.0)
+        } else {
+            2.4
+        },
+        cex_exposure_pct: if total_vol_out > 0.0 {
+            (cex_exposure_vol / total_vol_out * 100.0).min(100.0)
+        } else {
+            0.0
+        },
+        bridge_exposure_pct: if total_vol_out > 0.0 {
+            (bridge_exposure_vol / total_vol_out * 100.0).min(100.0)
+        } else {
+            0.0
+        },
+        dex_exposure_pct: if total_vol_out > 0.0 {
+            (dex_exposure_vol / total_vol_out * 100.0).min(100.0)
+        } else {
+            0.0
+        },
         clean_volume_pct: (100.0 - mixer_pct).max(0.0),
         is_sanctioned_sdn: is_sanctioned,
         peeling_chain_detected: is_sanctioned || mixer_pct > 15.0,
@@ -664,17 +711,49 @@ pub fn generate_investigation_report(graph: &ForensicGraph) -> String {
     out.push_str("# ON-CHAIN FORENSIC INVESTIGATION REPORT\n\n");
     out.push_str(&format!("**Target Address**: `{}`\n", graph.subject));
     out.push_str(&format!("**Attribution Label**: {}\n", graph.dossier.label));
-    out.push_str(&format!("**Risk Assessment**: {} (Score: {}/100)\n", graph.overall_risk_level, graph.overall_risk_score));
-    out.push_str(&format!("**OFAC Sanctions Hit**: {}\n", if graph.dossier.is_sanctioned { "YES [SDN LISTED]" } else { "NO [CLEAN]" }));
-    out.push_str(&format!("**Graph Traversal**: {} hops across {} unique counterparties\n\n", graph.max_hops, graph.total_entities));
+    out.push_str(&format!(
+        "**Risk Assessment**: {} (Score: {}/100)\n",
+        graph.overall_risk_level, graph.overall_risk_score
+    ));
+    out.push_str(&format!(
+        "**OFAC Sanctions Hit**: {}\n",
+        if graph.dossier.is_sanctioned {
+            "YES [SDN LISTED]"
+        } else {
+            "NO [CLEAN]"
+        }
+    ));
+    out.push_str(&format!(
+        "**Graph Traversal**: {} hops across {} unique counterparties\n\n",
+        graph.max_hops, graph.total_entities
+    ));
 
     out.push_str("## 1. Executive Summary & Exposure Breakdown\n\n");
     if let Some(ref t) = graph.taint {
-        out.push_str(&format!("- **Direct Privacy Mixer Exposure**: {:.2}%\n", t.direct_mixer_pct));
-        out.push_str(&format!("- **Indirect Laundering Taint**: {:.2}%\n", t.indirect_taint_pct));
-        out.push_str(&format!("- **Centralized Exchange Off-Ramp Exposure**: {:.2}%\n", t.cex_exposure_pct));
-        out.push_str(&format!("- **Cross-Chain Bridge Dispersion**: {:.2}%\n", t.bridge_exposure_pct));
-        out.push_str(&format!("- **Peeling Chain Pattern Detected**: {}\n", if t.peeling_chain_detected { "Positive (High Velocity)" } else { "Negative" }));
+        out.push_str(&format!(
+            "- **Direct Privacy Mixer Exposure**: {:.2}%\n",
+            t.direct_mixer_pct
+        ));
+        out.push_str(&format!(
+            "- **Indirect Laundering Taint**: {:.2}%\n",
+            t.indirect_taint_pct
+        ));
+        out.push_str(&format!(
+            "- **Centralized Exchange Off-Ramp Exposure**: {:.2}%\n",
+            t.cex_exposure_pct
+        ));
+        out.push_str(&format!(
+            "- **Cross-Chain Bridge Dispersion**: {:.2}%\n",
+            t.bridge_exposure_pct
+        ));
+        out.push_str(&format!(
+            "- **Peeling Chain Pattern Detected**: {}\n",
+            if t.peeling_chain_detected {
+                "Positive (High Velocity)"
+            } else {
+                "Negative"
+            }
+        ));
     }
 
     out.push_str("\n## 2. Key Findings & Alerts\n\n");
@@ -686,9 +765,25 @@ pub fn generate_investigation_report(graph: &ForensicGraph) -> String {
     out.push_str("| Hop | Source | Destination | Amount | Token | Tx Hash |\n");
     out.push_str("| :--- | :--- | :--- | :--- | :--- | :--- |\n");
     for e in &graph.edges {
-        let src_short = if e.source.len() > 10 { format!("{}...{}", &e.source[..6], &e.source[e.source.len()-4..]) } else { e.source.clone() };
-        let dst_short = if e.target.len() > 10 { format!("{}...{}", &e.target[..6], &e.target[e.target.len()-4..]) } else { e.target.clone() };
-        out.push_str(&format!("| {} | `{}` | `{}` | {:.2} | {} | `{}` |\n", e.hop, src_short, dst_short, e.value_eth, e.token, &e.tx_hash[..10]));
+        let src_short = if e.source.len() > 10 {
+            format!("{}...{}", &e.source[..6], &e.source[e.source.len() - 4..])
+        } else {
+            e.source.clone()
+        };
+        let dst_short = if e.target.len() > 10 {
+            format!("{}...{}", &e.target[..6], &e.target[e.target.len() - 4..])
+        } else {
+            e.target.clone()
+        };
+        out.push_str(&format!(
+            "| {} | `{}` | `{}` | {:.2} | {} | `{}` |\n",
+            e.hop,
+            src_short,
+            dst_short,
+            e.value_eth,
+            e.token,
+            &e.tx_hash[..10]
+        ));
     }
 
     out.push_str("\n---\n*Report generated automatically by rusty-chain-kit Chainalysis Forensic Intelligence Visual Kit.*\n");
