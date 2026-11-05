@@ -87,9 +87,12 @@
           <i class="fa-solid fa-cubes w-5 text-center"></i>
           <span>Chain Explorer</span>
         </button>
-        <button onclick="navigateTab('forensics')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="forensics">
-          <i class="fa-solid fa-diagram-project w-5 text-center"></i>
-          <span>Forensics & Flow</span>
+        <button onclick="navigateTab('forensics')" class="nav-btn w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="forensics">
+          <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-diagram-project w-5 text-center text-cyan-400"></i>
+            <span>Visual Kit (Forensics)</span>
+          </div>
+          <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Reactor</span>
         </button>
         <button onclick="navigateTab('bytecode')" class="nav-btn w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition text-slate-400 hover:text-slate-200 hover:bg-slate-800/50" data-tab="bytecode">
           <i class="fa-solid fa-microchip w-5 text-center"></i>
@@ -541,154 +544,341 @@ contract Counter {
         </div>
       </section>
 
-      <!-- ─────────────────── TAB: FORENSICS & FLOW (CHAINALYSIS-STYLE) ─────────────────── -->
-      <section id="tab-forensics" class="tab-pane hidden space-y-6">
-        <div class="flex items-center justify-between">
+            <!-- ─────────────────── TAB: FORENSICS & FLOW (CHAINALYSIS REACTOR-GRADE) ─────────────────── -->
+      <section id="tab-forensics" class="tab-pane hidden space-y-5">
+        <!-- Header & Action Bar -->
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-dark-900 border border-slate-800 rounded-xl p-4">
           <div>
-            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
-              <i class="fa-solid fa-diagram-project text-emerald-400"></i>
-              <span>Blockchain Forensic Flow Visualizer</span>
+            <div class="flex items-center space-x-2">
+              <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold tracking-wider uppercase">Chainalysis Reactor Mode</span>
+              <span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold tracking-wider uppercase">OFAC SDN Watch</span>
+            </div>
+            <h2 class="text-xl font-bold text-white flex items-center space-x-2 mt-1.5">
+              <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+              <span>Forensic Intelligence & On-Chain Fund Flow</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-1">Multi-hop transaction flow tracing, entity clustering, and mixer/bridge risk intelligence</p>
+            <p class="text-xs text-slate-400 mt-0.5">Multi-hop graph peeling, sanctions taint propagation, mixer washing detection & LEA dossier generator</p>
           </div>
-          <div class="flex items-center space-x-3">
-            <input id="forensics-search-input" type="text" placeholder="0xd8dA6... (address or tx hash)" value="0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 mono w-72 focus:border-emerald-500 focus:outline-none">
-            <button onclick="loadForensicsFlow()" class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5">
-              <i class="fa-solid fa-magnifying-glass"></i>
-              <span>Trace Flow</span>
+
+          <!-- Quick Case Presets -->
+          <div class="flex items-center flex-wrap gap-2">
+            <span class="text-[11px] text-slate-400 font-semibold mr-1">Case Presets:</span>
+            <button onclick="loadPresetCase('lazarus-ronin')" class="px-2.5 py-1 rounded bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-800 text-xs font-medium flex items-center space-x-1.5 transition">
+              <span>🚨 Lazarus Ronin</span>
+            </button>
+            <button onclick="loadPresetCase('tornado-peeling')" class="px-2.5 py-1 rounded bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-800 text-xs font-medium flex items-center space-x-1.5 transition">
+              <span>🌪️ Tornado Washer</span>
+            </button>
+            <button onclick="loadPresetCase('euler-exploit')" class="px-2.5 py-1 rounded bg-purple-950/80 hover:bg-purple-900 text-purple-300 border border-purple-800 text-xs font-medium flex items-center space-x-1.5 transition">
+              <span>⚡ Euler $197M</span>
+            </button>
+            <button onclick="loadPresetCase('vitalik')" class="px-2.5 py-1 rounded bg-blue-950/80 hover:bg-blue-900 text-blue-300 border border-blue-800 text-xs font-medium flex items-center space-x-1.5 transition">
+              <span>💎 Vitalik.eth</span>
             </button>
           </div>
         </div>
 
-        <!-- Legend & Entity Classification -->
-        <div class="flex items-center space-x-4 px-4 py-2 bg-dark-900 border border-slate-800 rounded-lg text-xs">
-          <span class="text-slate-400 font-medium">Entity Clustering:</span>
-          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span><span class="text-slate-300">Subject Account</span></span>
-          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span><span class="text-slate-300">DEX / Contract</span></span>
-          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-rose-500"></span><span class="text-slate-300">Mixer / Privacy Pool</span></span>
-          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-amber-500"></span><span class="text-slate-300">Cross-Chain Bridge</span></span>
-          <span class="flex items-center space-x-1.5"><span class="w-3 h-3 rounded-full bg-purple-500"></span><span class="text-slate-300">Centralized Exchange</span></span>
-        </div>
-
-        <!-- Interactive Canvas & Inspector -->
-        <div class="grid grid-cols-12 gap-6">
-          <div class="col-span-8 bg-dark-900 border border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center min-h-[460px] relative overflow-hidden">
-            <svg id="forensics-svg" class="w-full h-[440px]" viewBox="0 0 800 440">
-              <defs>
-                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
-                </marker>
-                <marker id="arrow-risk" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                  <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
-                </marker>
-              </defs>
-              <!-- Links -->
-              <line x1="400" y1="220" x2="220" y2="120" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" stroke-dasharray="4,2" />
-              <text x="290" y="155" fill="#93c5fd" font-size="11" font-family="monospace">15.0 ETH</text>
-
-              <line x1="220" y1="120" x2="100" y2="280" stroke="#f43f5e" stroke-width="3" marker-end="url(#arrow-risk)" />
-              <text x="140" y="210" fill="#fda4af" font-size="11" font-family="monospace">10.0 WETH (Risk!)</text>
-
-              <line x1="400" y1="220" x2="580" y2="120" stroke="#f59e0b" stroke-width="2.5" marker-end="url(#arrow)" />
-              <text x="500" y="155" fill="#fcd34d" font-size="11" font-family="monospace">50.0 ETH</text>
-
-              <line x1="400" y1="220" x2="600" y2="320" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" />
-              <text x="490" y="285" fill="#93c5fd" font-size="11" font-family="monospace">25.0 USDC</text>
-
-              <line x1="600" y1="320" x2="720" y2="180" stroke="#a855f7" stroke-width="2.5" marker-end="url(#arrow)" />
-              <text x="670" y="240" fill="#d8b4fe" font-size="11" font-family="monospace">24.8 USDT</text>
-
-              <!-- Center Subject Node -->
-              <g onclick="selectEntity('Subject', '0xd8dA6...6045', '142.5 ETH', 'Low', 0)" class="cursor-pointer">
-                <circle cx="400" cy="220" r="28" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-width="3" />
-                <circle cx="400" cy="220" r="14" fill="#10b981" />
-                <text x="400" y="265" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="bold">Subject Account</text>
-                <text x="400" y="280" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">0xd8dA6...6045</text>
-              </g>
-
-              <!-- Node: Uniswap V3 -->
-              <g onclick="selectEntity('Uniswap V3 SwapRouter', '0x68b34...Fc45', '5,410 ETH', 'Clean', 1)" class="cursor-pointer">
-                <circle cx="220" cy="120" r="22" fill="#3b82f6" fill-opacity="0.2" stroke="#3b82f6" stroke-width="2.5" />
-                <circle cx="220" cy="120" r="11" fill="#3b82f6" />
-                <text x="220" y="88" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Uniswap V3</text>
-                <text x="220" y="102" text-anchor="middle" fill="#94a3b8" font-size="10" font-family="monospace">DEX Contract</text>
-              </g>
-
-              <!-- Node: Tornado Cash -->
-              <g onclick="selectEntity('Tornado Cash Router', '0xd90e2...F31b', '12,890 ETH', 'HIGH ALERT (Mixer)', 2)" class="cursor-pointer">
-                <circle cx="100" cy="280" r="26" fill="#f43f5e" fill-opacity="0.3" stroke="#f43f5e" stroke-width="3" />
-                <circle cx="100" cy="280" r="13" fill="#f43f5e" />
-                <text x="100" y="322" text-anchor="middle" fill="#fda4af" font-size="11" font-weight="bold">Tornado Cash</text>
-                <text x="100" y="336" text-anchor="middle" fill="#fb7185" font-size="10">High Risk Mixer (Hop 2)</text>
-              </g>
-
-              <!-- Node: Arbitrum Bridge -->
-              <g onclick="selectEntity('Arbitrum One Bridge', '0x4dbd4...48ff', '84,000 ETH', 'Clean', 1)" class="cursor-pointer">
-                <circle cx="580" cy="120" r="22" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-width="2.5" />
-                <circle cx="580" cy="120" r="11" fill="#f59e0b" />
-                <text x="580" y="88" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Arbitrum Bridge</text>
-                <text x="580" y="102" text-anchor="middle" fill="#94a3b8" font-size="10">L2 Ingress</text>
-              </g>
-
-              <!-- Node: 1inch -->
-              <g onclick="selectEntity('1inch Aggregator', '0x11111...097d', '3,120 ETH', 'Clean', 1)" class="cursor-pointer">
-                <circle cx="600" cy="320" r="22" fill="#3b82f6" fill-opacity="0.2" stroke="#3b82f6" stroke-width="2.5" />
-                <circle cx="600" cy="320" r="11" fill="#3b82f6" />
-                <text x="600" y="358" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">1inch Aggregator</text>
-                <text x="600" y="372" text-anchor="middle" fill="#94a3b8" font-size="10">Router Contract</text>
-              </g>
-
-              <!-- Node: Binance Hot Wallet -->
-              <g onclick="selectEntity('Binance Hot Wallet 6', '0x3f5CE...f0bE', '420,000 ETH', 'Clean', 2)" class="cursor-pointer">
-                <circle cx="720" cy="180" r="22" fill="#a855f7" fill-opacity="0.2" stroke="#a855f7" stroke-width="2.5" />
-                <circle cx="720" cy="180" r="11" fill="#a855f7" />
-                <text x="720" y="148" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="semibold">Binance Hot Wallet</text>
-                <text x="720" y="162" text-anchor="middle" fill="#94a3b8" font-size="10">CEX Deposit (Hop 2)</text>
-              </g>
-            </svg>
+        <!-- Search & Query Config Bar -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-dark-900 border border-slate-800 rounded-xl p-3">
+          <div class="flex-1 flex items-center space-x-2">
+            <div class="relative flex-1">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+              <input id="forensics-search-input" type="text" placeholder="Target address (0x...) or ENS name" value="0x098B716B8Aaf21512996dC57EB0615e2383E2f96" class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-200 mono focus:border-cyan-500 focus:outline-none">
+            </div>
+            <select id="forensics-hops-select" class="bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 focus:border-cyan-500 focus:outline-none">
+              <option value="1">1 Hop</option>
+              <option value="2" selected>2 Hops (Deep Trace)</option>
+              <option value="3">3 Hops (Full Peeling)</option>
+            </select>
+            <button onclick="loadForensicsFlow()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 shadow transition">
+              <i class="fa-solid fa-radar"></i>
+              <span>Trace Flow</span>
+            </button>
           </div>
 
-          <!-- Forensics Inspector Panel -->
-          <div class="col-span-4 bg-dark-900 border border-slate-800 rounded-xl p-5 space-y-4">
-            <h3 class="font-bold text-white text-base flex items-center space-x-2">
-              <i class="fa-solid fa-fingerprint text-emerald-400"></i>
-              <span>Entity Dossier</span>
-            </h3>
+          <div class="flex items-center space-x-2 border-t sm:border-t-0 sm:border-l border-slate-800 pt-2 sm:pt-0 sm:pl-3">
+            <button onclick="openInvestigationReportModal()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition">
+              <i class="fa-solid fa-file-contract text-cyan-400"></i>
+              <span>LEA Dossier</span>
+            </button>
+            <button onclick="exportForensicsJson()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium flex items-center space-x-1.5 transition" title="Export graph for Gephi / Cytoscape">
+              <i class="fa-solid fa-download text-slate-400"></i>
+              <span>Export Graph</span>
+            </button>
+          </div>
+        </div>
 
-            <div class="space-y-3 text-xs">
-              <div>
-                <label class="text-slate-500 uppercase tracking-wider font-semibold">Entity Name</label>
-                <div id="inspector-name" class="font-semibold text-white text-sm mt-0.5">Subject Account</div>
+        <!-- Reactor KPI & Taint Sanctions Banner -->
+        <div id="forensics-kpi-banner" class="grid grid-cols-1 md:grid-cols-5 gap-3">
+          <!-- Card 1: Sanction SDN Status -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">OFAC Sanction Status</span>
+              <i class="fa-solid fa-gavel text-slate-500"></i>
+            </div>
+            <div id="kpi-ofac-status" class="mt-2">
+              <span class="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center space-x-1.5 w-fit animate-pulse">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>OFAC SDN LISTED</span>
+              </span>
+            </div>
+            <div id="kpi-ofac-sub" class="text-[11px] text-slate-500 mt-1">Lazarus Group (DPRK) Target</div>
+          </div>
+
+          <!-- Card 2: Direct Mixer Taint -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">Direct Mixer Taint</span>
+              <i class="fa-solid fa-soap text-rose-400"></i>
+            </div>
+            <div class="mt-2 flex items-baseline space-x-2">
+              <span id="kpi-mixer-taint" class="text-2xl font-black text-rose-400">84.2%</span>
+              <span class="text-[10px] text-rose-400 font-bold uppercase">CRITICAL</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5 mt-1 overflow-hidden">
+              <div id="kpi-mixer-bar" class="bg-rose-500 h-1.5 rounded-full" style="width: 84.2%"></div>
+            </div>
+          </div>
+
+          <!-- Card 3: Laundering Risk Score -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">Laundering Risk Score</span>
+              <i class="fa-solid fa-biohazard text-amber-400"></i>
+            </div>
+            <div class="mt-2 flex items-baseline space-x-2">
+              <span id="kpi-risk-score" class="text-2xl font-black text-rose-400">98 / 100</span>
+              <span class="text-[10px] text-rose-300 font-bold uppercase">TIER 1 SEVERE</span>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1 truncate" id="kpi-risk-desc">High volume multi-hop mixer washing</div>
+          </div>
+
+          <!-- Card 4: Tracked Outflow Volume -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">Tracked Outflow</span>
+              <i class="fa-solid fa-money-bill-transfer text-cyan-400"></i>
+            </div>
+            <div class="mt-2">
+              <span id="kpi-tracked-vol" class="text-xl font-black text-white">173,600 ETH</span>
+            </div>
+            <div id="kpi-tracked-usd" class="text-[11px] text-emerald-400 font-medium mt-1">~$434,000,000 USD</div>
+          </div>
+
+          <!-- Card 5: Counterparty Distribution -->
+          <div class="bg-dark-900 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-xs text-slate-400">
+              <span class="font-medium">Flow Destination Breakdown</span>
+              <i class="fa-solid fa-chart-pie text-purple-400"></i>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-3 flex overflow-hidden my-2">
+              <div id="bar-mixer" class="bg-rose-500 h-full" style="width: 75%" title="Mixer: 75%"></div>
+              <div id="bar-bridge" class="bg-amber-500 h-full" style="width: 15%" title="Bridge: 15%"></div>
+              <div id="bar-cex" class="bg-purple-500 h-full" style="width: 10%" title="CEX: 10%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+              <span class="text-rose-400">Mixer 75%</span>
+              <span class="text-amber-400">Bridge 15%</span>
+              <span class="text-purple-400">CEX 10%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Forensics Canvas & Dossier Grid -->
+        <div class="grid grid-cols-12 gap-5">
+          <!-- Left: Forensics Flow Visual Canvas -->
+          <div class="col-span-12 xl:col-span-8 bg-dark-900 border border-slate-800 rounded-xl p-4 flex flex-col relative min-h-[560px] overflow-hidden">
+            <!-- Canvas Toolbar overlay -->
+            <div class="absolute top-4 left-4 z-10 flex items-center space-x-2">
+              <div class="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-900/90 border border-slate-700 rounded-lg text-xs backdrop-blur">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span id="canvas-node-count" class="text-slate-300 font-mono">6 Nodes</span>
+                <span class="text-slate-600">|</span>
+                <span id="canvas-edge-count" class="text-slate-300 font-mono">7 Edges</span>
               </div>
-              <div>
-                <label class="text-slate-500 uppercase tracking-wider font-semibold">Address</label>
-                <div id="inspector-addr" class="mono text-slate-300 mt-0.5 truncate">0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045</div>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="text-slate-500 uppercase tracking-wider font-semibold">Balance</label>
-                  <div id="inspector-balance" class="font-semibold text-emerald-400 mt-0.5">142.5 ETH</div>
-                </div>
-                <div>
-                  <label class="text-slate-500 uppercase tracking-wider font-semibold">Hop Level</label>
-                  <div id="inspector-hop" class="font-semibold text-slate-200 mt-0.5">0 (Direct Target)</div>
-                </div>
-              </div>
-              <div>
-                <label class="text-slate-500 uppercase tracking-wider font-semibold">Risk Classification</label>
-                <div id="inspector-risk" class="mt-0.5"><span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Low Risk</span></div>
+              <div class="flex items-center space-x-1 px-2 py-1 bg-slate-900/90 border border-slate-700 rounded-lg text-xs backdrop-blur">
+                <button onclick="toggleFlowParticles()" id="btn-flow-particles" class="px-2 py-0.5 rounded bg-cyan-600 text-white text-[11px] font-medium" title="Toggle animated flow particles">
+                  <i class="fa-solid fa-water"></i> Flow Active
+                </button>
+                <button onclick="resetCanvasView()" class="px-2 py-0.5 rounded hover:bg-slate-800 text-slate-300 text-[11px]" title="Reset Layout">
+                  <i class="fa-solid fa-arrow-rotate-left"></i>
+                </button>
               </div>
             </div>
 
-            <div class="pt-4 border-t border-slate-800 space-y-2">
-              <button onclick="alert('Exporting forensic graph in JSON / Gephi format...')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded text-xs font-semibold flex items-center justify-center space-x-1.5">
-                <i class="fa-solid fa-download"></i>
-                <span>Export Flow Graph (JSON)</span>
+            <!-- Legend Overlay -->
+            <div class="absolute bottom-4 left-4 z-10 flex flex-wrap gap-2 px-3 py-2 bg-slate-900/90 border border-slate-800 rounded-lg text-[11px] backdrop-blur max-w-xl">
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-sm shadow-cyan-500/50"></span><span class="text-slate-300">Subject</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-sm shadow-rose-500/50"></span><span class="text-slate-300">Mixer / Sanctioned</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-sm shadow-purple-500/50"></span><span class="text-slate-300">CEX Deposit</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-sm shadow-amber-500/50"></span><span class="text-slate-300">Bridge</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50"></span><span class="text-slate-300">DEX / Contract</span></span>
+              <span class="flex items-center space-x-1.5"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span><span class="text-slate-300">Intermediary EOA</span></span>
+            </div>
+
+            <!-- SVG Container -->
+            <div class="flex-1 w-full h-[520px] rounded-lg bg-slate-950/70 border border-slate-900 relative cursor-grab active:cursor-grabbing select-none" id="canvas-container">
+              <svg id="forensics-svg" class="w-full h-full" viewBox="0 0 900 520">
+                <defs>
+                  <!-- Glow Filters -->
+                  <filter id="glow-red" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                  <!-- Arrow Markers -->
+                  <marker id="arrow-clean" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
+                  </marker>
+                  <marker id="arrow-risk" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+                  </marker>
+                  <marker id="arrow-warning" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+                  </marker>
+                  <marker id="arrow-purple" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 0 L 10 5 L 0 10 z" fill="#c084fc" />
+                  </marker>
+                </defs>
+                <g id="svg-concentric-guides"></g>
+                <g id="svg-edges-layer"></g>
+                <g id="svg-particles-layer"></g>
+                <g id="svg-nodes-layer"></g>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Right: Entity Dossier & Investigation Drawer -->
+          <div class="col-span-12 xl:col-span-4 bg-dark-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between space-y-4">
+            <div class="space-y-4">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div class="flex items-center space-x-2">
+                  <div class="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
+                    <i class="fa-solid fa-fingerprint"></i>
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-white text-sm">Entity Forensic Dossier</h3>
+                    <p class="text-[11px] text-slate-400">Inspecting node profile & risk telemetry</p>
+                  </div>
+                </div>
+                <span id="dossier-hop-badge" class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold">Hop 0</span>
+              </div>
+
+              <!-- Entity Identification -->
+              <div class="space-y-2.5 text-xs">
+                <div>
+                  <span class="text-slate-500 uppercase tracking-wider font-semibold text-[10px]">Verified Entity Label</span>
+                  <div id="inspector-name" class="font-bold text-white text-base mt-0.5 truncate flex items-center space-x-2">
+                    <span>Ronin Bridge Exploiter</span>
+                  </div>
+                </div>
+
+                <div>
+                  <span class="text-slate-500 uppercase tracking-wider font-semibold text-[10px]">Ethereum Address</span>
+                  <div class="flex items-center space-x-1.5 mt-0.5 bg-slate-950 p-2 rounded border border-slate-800">
+                    <span id="inspector-addr" class="mono text-slate-200 text-xs truncate flex-1">0x098B716B8Aaf21512996dC57EB0615e2383E2f96</span>
+                    <button onclick="copyToClipboard(document.getElementById('inspector-addr').textContent)" class="p-1 hover:text-cyan-400 text-slate-400 text-xs" title="Copy Address">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <a id="inspector-etherscan-link" href="#" target="_blank" class="p-1 hover:text-cyan-400 text-slate-400 text-xs" title="Open in Etherscan">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                  <div class="bg-slate-950 p-2.5 rounded border border-slate-800">
+                    <span class="text-slate-500 uppercase text-[10px] font-semibold">Entity Type</span>
+                    <div id="inspector-category" class="font-bold text-rose-400 text-xs mt-0.5">Sanctioned EOA</div>
+                  </div>
+                  <div class="bg-slate-950 p-2.5 rounded border border-slate-800">
+                    <span class="text-slate-500 uppercase text-[10px] font-semibold">Current Balance</span>
+                    <div id="inspector-balance" class="font-bold text-white text-xs mt-0.5">173,600.0 ETH</div>
+                  </div>
+                </div>
+
+                <!-- Risk Score Bar -->
+                <div class="bg-slate-950 p-2.5 rounded border border-slate-800 space-y-1.5">
+                  <div class="flex justify-between items-center">
+                    <span class="text-slate-500 uppercase text-[10px] font-semibold">Entity Laundering Risk</span>
+                    <span id="inspector-risk-score" class="text-xs font-black text-rose-400">98 / 100</span>
+                  </div>
+                  <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                    <div id="inspector-risk-meter" class="bg-rose-500 h-1.5 rounded-full" style="width: 98%"></div>
+                  </div>
+                  <div id="inspector-risk-tags" class="flex flex-wrap gap-1 pt-1">
+                    <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]">OFAC SDN Listed</span>
+                    <span class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px]">Lazarus Group</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Connected Flow Transactions Ledger -->
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-slate-400 text-xs font-semibold flex items-center space-x-1">
+                    <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+                    <span>Connected Transfers</span>
+                  </span>
+                  <span id="inspector-tx-count" class="text-[10px] text-slate-500 mono">4 Txs</span>
+                </div>
+                <div id="inspector-tx-list" class="space-y-1.5 max-h-40 overflow-y-auto pr-1 text-xs">
+                  <!-- Dynamically populated tx rows -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="pt-3 border-t border-slate-800 space-y-2">
+              <button onclick="openInvestigationReportModal()" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold flex items-center justify-center space-x-1.5 shadow transition">
+                <i class="fa-solid fa-shield-virus"></i>
+                <span>Generate Compliance / LEA Dossier</span>
               </button>
             </div>
           </div>
         </div>
+
+        <!-- Investigation Report Modal Dialog -->
+        <div id="forensics-report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+          <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-950">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 flex items-center justify-center">
+                  <i class="fa-solid fa-file-shield"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-white text-base">Forensic Investigation Report (LEA/Compliance)</h3>
+                  <p class="text-[11px] text-slate-400">Chainalysis Reactor Standard On-Chain Audit Dossier</p>
+                </div>
+              </div>
+              <button onclick="closeInvestigationReportModal()" class="text-slate-400 hover:text-white p-1 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1 font-mono text-xs text-slate-200 bg-slate-950 space-y-4">
+              <pre id="report-modal-content" class="whitespace-pre-wrap leading-relaxed select-text font-mono text-xs text-slate-300"></pre>
+            </div>
+
+            <div class="px-6 py-3 border-t border-slate-800 bg-slate-900 flex items-center justify-between">
+              <span class="text-[11px] text-slate-500 mono">Generated by rusty-chain-kit v0.1.2</span>
+              <div class="flex items-center space-x-2">
+                <button onclick="copyToClipboard(document.getElementById('report-modal-content').textContent)" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold flex items-center space-x-1.5">
+                  <i class="fa-regular fa-copy"></i>
+                  <span>Copy Report</span>
+                </button>
+                <button onclick="closeInvestigationReportModal()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold">
+                  <span>Done</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
+
 
       <!-- ─────────────────── TAB: BYTECODE & PROXY INTELLIGENCE ─────────────────── -->
       <section id="tab-bytecode" class="tab-pane hidden space-y-6">
@@ -1335,32 +1525,477 @@ contract Counter {
       }
     }
 
-    // ─────────────────────────── Forensics & New Intelligence APIs ───────────────────────────
-    function selectEntity(name, addr, balance, risk, hop) {
-      document.getElementById('inspector-name').textContent = name;
-      document.getElementById('inspector-addr').textContent = addr;
-      document.getElementById('inspector-balance').textContent = balance;
-      document.getElementById('inspector-hop').textContent = `${hop} (Distance)`;
-      const riskEl = document.getElementById('inspector-risk');
-      if (risk.includes('High') || risk.includes('Risk') || risk.includes('Mixer')) {
-        riskEl.innerHTML = `<span class="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold">${risk}</span>`;
+        // ─────────────────────────── Forensics Visual Kit (Chainalysis Reactor) ───────────────────────────
+    let currentForensicGraph = null;
+    let selectedNodeId = null;
+    let flowParticlesActive = true;
+    let simulationNodes = [];
+
+    const ENTITY_STYLES = {
+      'Subject':    { stroke: '#06b6d4', fill: '#06b6d4', glow: 'glow-cyan', r: 24, badge: 'Target' },
+      'Sanctioned': { stroke: '#f43f5e', fill: '#f43f5e', glow: 'glow-red',  r: 22, badge: 'OFAC SDN' },
+      'Mixer':      { stroke: '#fb7185', fill: '#e11d48', glow: 'glow-red',  r: 22, badge: 'Mixer' },
+      'CEX':        { stroke: '#c084fc', fill: '#a855f7', glow: null,        r: 20, badge: 'CEX' },
+      'Bridge':     { stroke: '#fbbf24', fill: '#f59e0b', glow: null,        r: 20, badge: 'Bridge' },
+      'DEX':        { stroke: '#60a5fa', fill: '#3b82f6', glow: null,        r: 18, badge: 'DEX' },
+      'EOA':        { stroke: '#94a3b8', fill: '#64748b', glow: null,        r: 16, badge: 'EOA' }
+    };
+
+    function toggleFlowParticles() {
+      flowParticlesActive = !flowParticlesActive;
+      const btn = document.getElementById('btn-flow-particles');
+      const layer = document.getElementById('svg-particles-layer');
+      if (flowParticlesActive) {
+        btn.classList.add('bg-cyan-600', 'text-white');
+        btn.classList.remove('bg-slate-800', 'text-slate-400');
+        btn.innerHTML = '<i class="fa-solid fa-water"></i> Flow Active';
+        if (layer) layer.style.display = 'block';
       } else {
-        riskEl.innerHTML = `<span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">${risk}</span>`;
+        btn.classList.remove('bg-cyan-600', 'text-white');
+        btn.classList.add('bg-slate-800', 'text-slate-400');
+        btn.innerHTML = '<i class="fa-solid fa-stop"></i> Flow Paused';
+        if (layer) layer.style.display = 'none';
+      }
+    }
+
+    function resetCanvasView() {
+      if (currentForensicGraph) {
+        renderForensicCanvas(currentForensicGraph);
+      }
+    }
+
+    async function loadPresetCase(presetId) {
+      try {
+        const res = await fetch('/api/forensics/presets');
+        const presets = await res.json();
+        const p = presets.find(x => x.id === presetId);
+        if (p) {
+          document.getElementById('forensics-search-input').value = p.target_address;
+          document.getElementById('forensics-hops-select').value = p.default_hops;
+          await loadForensicsFlow();
+        }
+      } catch (e) {
+        console.error('Failed to load preset', e);
       }
     }
 
     async function loadForensicsFlow() {
-      const addr = document.getElementById('forensics-search-input').value;
+      const addr = document.getElementById('forensics-search-input').value.trim();
+      const hops = document.getElementById('forensics-hops-select').value;
+      if (!addr) return;
+
       try {
-        const res = await fetch(`/api/forensics/flow?address=${encodeURIComponent(addr)}`);
-        const data = await res.json();
-        if (data.nodes && data.nodes.length > 0) {
-          selectEntity(data.nodes[0].label, data.nodes[0].id, data.nodes[0].balance, data.nodes[0].risk, data.nodes[0].hop);
+        const res = await fetch(`/api/forensics/flow?address=${encodeURIComponent(addr)}&hops=${hops}`);
+        const graph = await res.json();
+        currentForensicGraph = graph;
+        updateForensicsKPI(graph);
+        renderForensicCanvas(graph);
+        if (graph.nodes && graph.nodes.length > 0) {
+          selectForensicNode(graph.nodes[0].id);
         }
       } catch (e) {
-        console.error('Forensics load error', e);
+        console.error('Forensics trace error:', e);
       }
     }
+
+    function updateForensicsKPI(graph) {
+      if (!graph) return;
+      const t = graph.taint;
+      if (!t) return;
+
+      // OFAC Status
+      const ofacEl = document.getElementById('kpi-ofac-status');
+      const ofacSub = document.getElementById('kpi-ofac-sub');
+      if (t.ofac_sdn_hit) {
+        ofacEl.innerHTML = `<span class="px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40 text-xs font-bold flex items-center space-x-1.5 w-fit animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i><span>OFAC SDN LISTED</span></span>`;
+        ofacSub.textContent = 'Designated Sanctions Entity Hit';
+      } else {
+        ofacEl.innerHTML = `<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold flex items-center space-x-1.5 w-fit"><i class="fa-solid fa-check-double"></i><span>CLEAN / UNRESTRICTED</span></span>`;
+        ofacSub.textContent = 'No active sanctions flag detected';
+      }
+
+      // Mixer Taint
+      const taintVal = t.direct_mixer_taint_percent;
+      const mixerTaintEl = document.getElementById('kpi-mixer-taint');
+      const mixerBarEl = document.getElementById('kpi-mixer-bar');
+      mixerTaintEl.textContent = `${taintVal.toFixed(1)}%`;
+      mixerBarEl.style.width = `${Math.min(100, Math.max(0, taintVal))}%`;
+      if (taintVal > 50) {
+        mixerTaintEl.className = 'text-2xl font-black text-rose-400';
+        mixerBarEl.className = 'bg-rose-500 h-1.5 rounded-full';
+      } else if (taintVal > 10) {
+        mixerTaintEl.className = 'text-2xl font-black text-amber-400';
+        mixerBarEl.className = 'bg-amber-500 h-1.5 rounded-full';
+      } else {
+        mixerTaintEl.className = 'text-2xl font-black text-emerald-400';
+        mixerBarEl.className = 'bg-emerald-500 h-1.5 rounded-full';
+      }
+
+      // Risk score
+      const score = t.indirect_taint_score;
+      document.getElementById('kpi-risk-score').textContent = `${score} / 100`;
+      document.getElementById('kpi-risk-desc').textContent = t.risk_summary || 'Multi-hop risk evaluation';
+
+      // Volumes
+      const volEth = t.total_tracked_volume_eth;
+      document.getElementById('kpi-tracked-vol').textContent = `${volEth.toLocaleString()} ETH`;
+      document.getElementById('kpi-tracked-usd').textContent = `~$${(volEth * 2500).toLocaleString()} USD`;
+
+      // Breakdown bars
+      const tot = volEth > 0 ? volEth : 1;
+      const mPct = ((t.mixer_volume_eth / tot) * 100).toFixed(0);
+      const bPct = ((t.bridge_volume_eth / tot) * 100).toFixed(0);
+      const cPct = ((t.cex_volume_eth / tot) * 100).toFixed(0);
+      document.getElementById('bar-mixer').style.width = `${mPct}%`;
+      document.getElementById('bar-bridge').style.width = `${bPct}%`;
+      document.getElementById('bar-cex').style.width = `${cPct}%`;
+    }
+
+    function renderForensicCanvas(graph) {
+      const svg = document.getElementById('forensics-svg');
+      const guidesLayer = document.getElementById('svg-concentric-guides');
+      const edgesLayer = document.getElementById('svg-edges-layer');
+      const particlesLayer = document.getElementById('svg-particles-layer');
+      const nodesLayer = document.getElementById('svg-nodes-layer');
+
+      guidesLayer.innerHTML = '';
+      edgesLayer.innerHTML = '';
+      particlesLayer.innerHTML = '';
+      nodesLayer.innerHTML = '';
+
+      document.getElementById('canvas-node-count').textContent = `${graph.nodes.length} Nodes`;
+      document.getElementById('canvas-edge-count').textContent = `${graph.edges.length} Edges`;
+
+      // Concentric Layout: Center = Hop 0 (450, 260)
+      const cx = 450;
+      const cy = 260;
+      const rHop1 = 155;
+      const rHop2 = 280;
+
+      // Draw Concentric Guide Rings
+      guidesLayer.innerHTML = `
+        <circle cx="${cx}" cy="${cy}" r="${rHop1}" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="4,4" />
+        <circle cx="${cx}" cy="${cy}" r="${rHop2}" fill="none" stroke="#1e293b" stroke-width="1.5" stroke-dasharray="4,4" />
+        <text x="${cx}" y="${cy - rHop1 - 8}" fill="#475569" font-size="9" text-anchor="middle" font-family="monospace">HOP 1 PERIMETER</text>
+        <text x="${cx}" y="${cy - rHop2 - 8}" fill="#475569" font-size="9" text-anchor="middle" font-family="monospace">HOP 2 PEELING RING</text>
+      `;
+
+      // Position nodes by hop
+      const nodeMap = {};
+      const hop0 = graph.nodes.filter(n => n.hop === 0);
+      const hop1 = graph.nodes.filter(n => n.hop === 1);
+      const hop2 = graph.nodes.filter(n => n.hop >= 2);
+
+      hop0.forEach(n => {
+        nodeMap[n.id] = { ...n, x: cx, y: cy };
+      });
+
+      hop1.forEach((n, idx) => {
+        const angle = (idx / Math.max(1, hop1.length)) * 2 * Math.PI - (Math.PI / 2);
+        nodeMap[n.id] = {
+          ...n,
+          x: cx + rHop1 * Math.cos(angle),
+          y: cy + rHop1 * Math.sin(angle)
+        };
+      });
+
+      hop2.forEach((n, idx) => {
+        const angle = ((idx + 0.5) / Math.max(1, hop2.length)) * 2 * Math.PI - (Math.PI / 2);
+        nodeMap[n.id] = {
+          ...n,
+          x: cx + rHop2 * Math.cos(angle),
+          y: cy + rHop2 * Math.sin(angle)
+        };
+      });
+
+      simulationNodes = Object.values(nodeMap);
+
+      // Render Edges & Animated Particles
+      graph.edges.forEach((e, idx) => {
+        const src = nodeMap[e.from];
+        const dst = nodeMap[e.to];
+        if (!src || !dst) return;
+
+        // Quadratic Bezier curve
+        const midX = (src.x + dst.x) / 2;
+        const midY = (src.y + dst.y) / 2;
+        // slight normal bend
+        const dx = dst.x - src.x;
+        const dy = dst.y - src.y;
+        const dist = Math.sqrt(dx*dx + dy*dy) || 1;
+        const bend = 24 * ((idx % 2 === 0) ? 1 : -1);
+        const ctrlX = midX - (dy / dist) * bend;
+        const ctrlY = midY + (dx / dist) * bend;
+
+        const pathD = `M ${src.x} ${src.y} Q ${ctrlX} ${ctrlY} ${dst.x} ${dst.y}`;
+        const markerType = e.is_risk ? 'url(#arrow-risk)' : 'url(#arrow-clean)';
+        const strokeColor = e.is_risk ? '#f43f5e' : '#38bdf8';
+
+        // Edge Path
+        const edgeId = `edge-path-${idx}`;
+        const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathEl.setAttribute('id', edgeId);
+        pathEl.setAttribute('d', pathD);
+        pathEl.setAttribute('fill', 'none');
+        pathEl.setAttribute('stroke', strokeColor);
+        pathEl.setAttribute('stroke-width', e.is_risk ? '2.5' : '1.8');
+        pathEl.setAttribute('stroke-opacity', '0.75');
+        pathEl.setAttribute('marker-end', markerType);
+        edgesLayer.appendChild(pathEl);
+
+        // Edge Label Badge
+        const labelText = `${e.amount} ${e.token}`;
+        const textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        textEl.setAttribute('x', ctrlX);
+        textEl.setAttribute('y', ctrlY - 4);
+        textEl.setAttribute('fill', e.is_risk ? '#fda4af' : '#7dd3fc');
+        textEl.setAttribute('font-size', '10');
+        textEl.setAttribute('font-family', 'monospace');
+        textEl.setAttribute('font-weight', 'bold');
+        textEl.setAttribute('text-anchor', 'middle');
+        textEl.textContent = labelText;
+        edgesLayer.appendChild(textEl);
+
+        // Flow Particle Animation
+        const pCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        pCircle.setAttribute('r', e.is_risk ? '3.5' : '2.5');
+        pCircle.setAttribute('fill', e.is_risk ? '#ffe4e6' : '#bae6fd');
+        pCircle.setAttribute('filter', e.is_risk ? 'url(#glow-red)' : 'url(#glow-cyan)');
+
+        const animMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+        animMotion.setAttribute('dur', `${Math.max(1.5, Math.min(3.5, 4 - (idx * 0.3)))}s`);
+        animMotion.setAttribute('repeatCount', 'indefinite');
+        animMotion.setAttribute('path', pathD);
+        pCircle.appendChild(animMotion);
+        particlesLayer.appendChild(pCircle);
+      });
+
+      // Render Nodes with Draggable Interactivity
+      simulationNodes.forEach(n => {
+        const style = ENTITY_STYLES[n.category] || ENTITY_STYLES['EOA'];
+        const isSanctioned = n.category === 'Sanctioned' || n.risk === 'Sanctioned';
+        const isMixer = n.category === 'Mixer';
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('class', 'cursor-pointer select-none');
+        g.setAttribute('id', `node-group-${n.id}`);
+
+        // Pulsing risk halo if sanctioned or high risk
+        if (isSanctioned || isMixer || n.risk_score >= 80) {
+          const halo = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          halo.setAttribute('cx', n.x);
+          halo.setAttribute('cy', n.y);
+          halo.setAttribute('r', style.r + 9);
+          halo.setAttribute('fill', 'none');
+          halo.setAttribute('stroke', '#f43f5e');
+          halo.setAttribute('stroke-width', '2');
+          halo.setAttribute('stroke-opacity', '0.6');
+          halo.setAttribute('stroke-dasharray', '3,3');
+          halo.innerHTML = '<animate attributeName="r" values="' + (style.r + 6) + ';' + (style.r + 14) + ';' + (style.r + 6) + '" dur="2.2s" repeatCount="indefinite" />';
+          g.appendChild(halo);
+        }
+
+        // Base Circle
+        const baseCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        baseCircle.setAttribute('cx', n.x);
+        baseCircle.setAttribute('cy', n.y);
+        baseCircle.setAttribute('r', style.r);
+        baseCircle.setAttribute('fill', style.fill);
+        baseCircle.setAttribute('fill-opacity', '0.22');
+        baseCircle.setAttribute('stroke', style.stroke);
+        baseCircle.setAttribute('stroke-width', n.hop === 0 ? '3.5' : '2.2');
+        if (style.glow) baseCircle.setAttribute('filter', `url(#${style.glow})`);
+        g.appendChild(baseCircle);
+
+        // Core Center Dot
+        const coreDot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        coreDot.setAttribute('cx', n.x);
+        coreDot.setAttribute('cy', n.y);
+        coreDot.setAttribute('r', n.hop === 0 ? 8 : 5);
+        coreDot.setAttribute('fill', style.fill);
+        g.appendChild(coreDot);
+
+        // Label Text
+        const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        titleEl.setAttribute('x', n.x);
+        titleEl.setAttribute('y', n.y + style.r + 14);
+        titleEl.setAttribute('fill', '#ffffff');
+        titleEl.setAttribute('font-size', n.hop === 0 ? '12' : '11');
+        titleEl.setAttribute('font-weight', 'bold');
+        titleEl.setAttribute('text-anchor', 'middle');
+        titleEl.textContent = n.label;
+        g.appendChild(titleEl);
+
+        // Sub Label (Address abbreviation)
+        const subEl = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        subEl.setAttribute('x', n.x);
+        subEl.setAttribute('y', n.y + style.r + 26);
+        subEl.setAttribute('fill', '#94a3b8');
+        subEl.setAttribute('font-size', '9.5');
+        subEl.setAttribute('font-family', 'monospace');
+        subEl.setAttribute('text-anchor', 'middle');
+        subEl.textContent = `${n.id.substring(0, 6)}...${n.id.substring(38)}`;
+        g.appendChild(subEl);
+
+        // Click Handler
+        g.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          selectForensicNode(n.id);
+        });
+
+        // Simple drag support
+        setupNodeDrag(g, n);
+
+        nodesLayer.appendChild(g);
+      });
+    }
+
+    function setupNodeDrag(g, node) {
+      let isDragging = false;
+      let startX = 0, startY = 0;
+
+      g.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        startX = e.clientX;
+        startY = e.clientY;
+        node.x += dx;
+        node.y += dy;
+        renderForensicCanvas(currentForensicGraph);
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+    }
+
+    function selectForensicNode(nodeId) {
+      selectedNodeId = nodeId;
+      if (!currentForensicGraph) return;
+
+      const node = currentForensicGraph.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      // Update Inspector Dossier UI
+      document.getElementById('inspector-name').textContent = node.label;
+      document.getElementById('inspector-addr').textContent = node.id;
+      document.getElementById('inspector-balance').textContent = node.balance;
+      document.getElementById('dossier-hop-badge').textContent = `Hop ${node.hop}`;
+      document.getElementById('inspector-category').textContent = node.category;
+
+      const etherscanLink = document.getElementById('inspector-etherscan-link');
+      if (etherscanLink) {
+        etherscanLink.href = `https://etherscan.io/address/${node.id}`;
+      }
+
+      // Risk score & tags
+      document.getElementById('inspector-risk-score').textContent = `${node.risk_score} / 100`;
+      const meter = document.getElementById('inspector-risk-meter');
+      meter.style.width = `${node.risk_score}%`;
+      if (node.risk_score >= 80) {
+        meter.className = 'bg-rose-500 h-1.5 rounded-full';
+      } else if (node.risk_score >= 40) {
+        meter.className = 'bg-amber-500 h-1.5 rounded-full';
+      } else {
+        meter.className = 'bg-emerald-500 h-1.5 rounded-full';
+      }
+
+      const tagsEl = document.getElementById('inspector-risk-tags');
+      tagsEl.innerHTML = (node.tags || []).map(t => {
+        const isAlert = t.includes('Sanction') || t.includes('Mixer') || t.includes('Exploit') || t.includes('Lazarus');
+        const colorClass = isAlert
+          ? 'bg-rose-500/20 text-rose-300 border-rose-500/30'
+          : 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30';
+        return `<span class="px-1.5 py-0.5 rounded border text-[10px] font-medium ${colorClass}">${t}</span>`;
+      }).join('');
+
+      // Connected transactions
+      const txList = document.getElementById('inspector-tx-list');
+      const connectedEdges = currentForensicGraph.edges.filter(e => e.from === node.id || e.to === node.id);
+      document.getElementById('inspector-tx-count').textContent = `${connectedEdges.length} Txs`;
+
+      if (connectedEdges.length === 0) {
+        txList.innerHTML = `<div class="text-[11px] text-slate-500 italic p-2">No direct transactions in current hop scope.</div>`;
+      } else {
+        txList.innerHTML = connectedEdges.map(e => {
+          const isOut = e.from === node.id;
+          const dirIcon = isOut
+            ? '<i class="fa-solid fa-arrow-trend-up text-rose-400"></i>'
+            : '<i class="fa-solid fa-arrow-trend-down text-emerald-400"></i>';
+          const dirText = isOut ? 'OUT' : 'IN';
+          const otherId = isOut ? e.to : e.from;
+          const otherNode = currentForensicGraph.nodes.find(n => n.id === otherId);
+          const otherLabel = otherNode ? otherNode.label : `${otherId.substring(0, 6)}...`;
+
+          return `
+            <div class="bg-slate-950 p-2 rounded border border-slate-800 flex items-center justify-between">
+              <div class="flex items-center space-x-1.5">
+                ${dirIcon}
+                <div>
+                  <div class="font-semibold text-white text-[11px]">${dirText} &bull; ${otherLabel}</div>
+                  <div class="text-[9.5px] text-slate-500 mono">${e.tx_hash.substring(0, 10)}...</div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-white text-[11px]">${e.amount} ${e.token}</div>
+                <div class="text-[9.5px] text-slate-500">${new Date(e.timestamp * 1000).toLocaleDateString()}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    async function openInvestigationReportModal() {
+      const addr = document.getElementById('forensics-search-input').value.trim();
+      const hops = parseInt(document.getElementById('forensics-hops-select').value, 10);
+      const modal = document.getElementById('forensics-report-modal');
+      const content = document.getElementById('report-modal-content');
+      modal.classList.remove('hidden');
+      content.textContent = 'Generating comprehensive compliance & law enforcement forensic dossier...';
+
+      try {
+        const res = await fetch('/api/forensics/report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: addr, hops: hops })
+        });
+        const data = await res.json();
+        if (data.success && data.report) {
+          content.textContent = data.report;
+        } else {
+          content.textContent = 'Error: ' + (data.error || 'Failed to generate report');
+        }
+      } catch (e) {
+        content.textContent = 'Network error generating report: ' + e;
+      }
+    }
+
+    function closeInvestigationReportModal() {
+      document.getElementById('forensics-report-modal').classList.add('hidden');
+    }
+
+    function exportForensicsJson() {
+      if (!currentForensicGraph) {
+        alert('Please run a trace flow first.');
+        return;
+      }
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(currentForensicGraph, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `forensic-graph-${currentForensicGraph.subject.substring(0, 10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
 
     async function analyzeBytecode() {
       const code = document.getElementById('bytecode-input').value;

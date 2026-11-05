@@ -55,6 +55,8 @@ pub async fn run_server(ws: Workspace, port: u16, open_browser: bool) -> Result<
         .route("/api/workflows/decompile", post(api_workflow_decompile))
         .route("/api/workflows/scaffold", post(api_workflow_scaffold))
         .route("/api/forensics/flow", get(api_get_forensics_flow))
+        .route("/api/forensics/presets", get(api_get_forensics_presets))
+        .route("/api/forensics/report", post(api_post_forensics_report))
         .route("/api/bytecode/inspect", post(api_bytecode_inspect))
         .route("/api/verify/prove", post(api_verify_prove))
         .route("/api/verify/fuzz", post(api_verify_fuzz))
@@ -466,6 +468,41 @@ async fn api_get_forensics_flow(
     let hops = q.hops.unwrap_or(2);
     match crate::forensics::trace_flow(&subject, hops) {
         Ok(graph) => Json(serde_json::to_value(&graph).unwrap_or_default()),
+        Err(e) => Json(json!({ "error": e.to_string() })),
+    }
+}
+
+async fn api_get_forensics_presets() -> Json<Value> {
+    let presets = crate::forensics::get_case_presets();
+    Json(serde_json::to_value(&presets).unwrap_or_default())
+}
+
+#[derive(Deserialize)]
+struct ForensicsReportRequest {
+    #[serde(default)]
+    address: Option<String>,
+    #[serde(default)]
+    hops: Option<usize>,
+}
+
+async fn api_post_forensics_report(
+    State(_s): State<AppState>,
+    Json(req): Json<ForensicsReportRequest>,
+) -> Json<Value> {
+    let subject = req
+        .address
+        .unwrap_or_else(|| "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045".into());
+    let hops = req.hops.unwrap_or(2);
+    match crate::forensics::trace_flow(&subject, hops) {
+        Ok(graph) => {
+            let report = crate::forensics::generate_investigation_report(&graph);
+            Json(json!({
+                "subject": subject,
+                "overall_risk_score": graph.overall_risk_score,
+                "overall_risk_level": graph.overall_risk_level,
+                "report": report
+            }))
+        }
         Err(e) => Json(json!({ "error": e.to_string() })),
     }
 }

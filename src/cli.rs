@@ -107,6 +107,9 @@ pub enum Commands {
     /// Launch the embedded Web GUI Dashboard
     Gui(GuiArgs),
 
+    /// Launch the Chainalysis-style interactive Visual Kit (web graph & taint analyzer)
+    Visual(VisualArgs),
+
     // ───────────────── Direct Tool Passthrough Subcommands ─────────────────
     /// Invoke `forge` (Foundry build/test/deploy tool)
     Forge {
@@ -716,6 +719,25 @@ pub struct GuiArgs {
     /// Port to listen on (default: 3333)
     #[arg(long, short, default_value_t = 3333)]
     pub port: u16,
+    /// Do not automatically open the browser
+    #[arg(long)]
+    pub no_open: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct VisualArgs {
+    /// Target address or investigation preset to trace
+    #[arg(default_value = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045")]
+    pub address: String,
+
+    /// Maximum graph traversal hops (1 to 4)
+    #[arg(long, default_value_t = 2)]
+    pub hops: usize,
+
+    /// Port to serve the Visual Kit dashboard
+    #[arg(long, default_value_t = 3333)]
+    pub port: u16,
+
     /// Do not automatically open the browser
     #[arg(long)]
     pub no_open: bool,
