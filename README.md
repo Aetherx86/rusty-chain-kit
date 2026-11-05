@@ -35,6 +35,24 @@ For comprehensive technical guides, architecture deep dives, and the exhaustive 
 
 ---
 
+## Competitive Architectural Comparison
+
+| Capability / Architecture Pillar | Rusty Chain Kit | Foundry (Alone) | Hardhat | Tenderly CLI |
+| :--- | :---: | :---: | :---: | :---: |
+| **Execution Speed & Binary** | Rust (Native) | Rust (Native) | Node.js (V8) | Go / Node |
+| **All-in-One CLI + Web GUI Dashboard** | YES | NO (CLI only) | NO (CLI only) | Cloud Web only |
+| **Bytecode Decompilation & SSA CFG** | YES (Heimdall) | NO | NO | Partial |
+| **SMT Symbolic Invariant Verification** | YES (Halmos) | Partial | NO | NO |
+| **Stateful Fuzzing & Invariants** | YES | YES | Partial | NO |
+| **Multi-Hop Forensic Flow & Taint Graph** | YES (Reactor-grade) | NO | NO | Partial |
+| **Storage Layout & Proxy Collision** | YES (Deep Slot Diff) | Basic inspect | Plugin needed | Partial |
+| **EIP-7702 & ERC-4337 Account Abstraction** | YES (Full Tooling) | Basic | Plugin needed | Simulated |
+| **Vectorized Parquet/SQL OLAP Analytics** | YES (Cryo/DuckDB) | NO | NO | Cloud only |
+| **Agent-Based AMM & MEV Mempool Sim** | YES (Artemis Engine) | NO | NO | Partial |
+| **100% Air-Gapped Local Operation** | YES (0 Cloud Leaks) | YES | YES | NO (Cloud req.) |
+
+---
+
 ## Multi-Hop Forensic Flow & Transaction Graph Architecture
 
 ```
