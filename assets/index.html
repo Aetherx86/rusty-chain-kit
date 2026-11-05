@@ -1061,6 +1061,10 @@ contract Counter {
     }
 
     function navigateTab(tabId) {
+      const cleanHash = window.location.hash.replace('#', '').split('?')[0];
+      if (cleanHash !== tabId) {
+        history.replaceState(null, null, `#${tabId}`);
+      }
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-btn').forEach(el => {
         el.classList.remove('text-emerald-400', 'bg-slate-800/80');
@@ -2132,8 +2136,39 @@ contract Counter {
       }
     }, 4000);
 
+    // Hash & Query routing on initial load and navigation
+    function handleHashRouting() {
+      const hashStr = window.location.hash.replace('#', '');
+      const hashTab = hashStr.split('?')[0];
+      
+      // Check query parameters in URL or hash
+      let params = new URLSearchParams(window.location.search);
+      if (hashStr.includes('?')) {
+        params = new URLSearchParams(hashStr.split('?')[1]);
+      }
+      
+      if (params.has('address')) {
+        const addr = params.get('address');
+        const inputEl = document.getElementById('forensics-search-input');
+        if (inputEl) inputEl.value = addr;
+      }
+      if (params.has('hops')) {
+        const hops = params.get('hops');
+        const hopsEl = document.getElementById('forensics-hops-select');
+        if (hopsEl) hopsEl.value = hops;
+      }
+
+      if (hashTab && document.getElementById(`tab-${hashTab}`)) {
+        navigateTab(hashTab);
+      } else {
+        navigateTab('repos');
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashRouting);
+
     // Initial load
-    fetchRepos();
+    handleHashRouting();
     checkDevnetStatus();
     refreshChainInfo();
   </script>

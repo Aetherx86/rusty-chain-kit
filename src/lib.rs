@@ -132,7 +132,7 @@ pub async fn run() -> Result<()> {
                     },
                 );
             }
-            let visual_url = format!("http://127.0.0.1:{}/#forensics", v.port);
+            let visual_url = format!("http://127.0.0.1:{}/#forensics?address={}&hops={}", v.port, v.address, v.hops);
             ui::ok(format!("Visual Kit live dashboard ready at {}", visual_url));
             if !v.no_open {
                 let _ = open::that(&visual_url);
